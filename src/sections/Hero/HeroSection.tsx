@@ -6,6 +6,7 @@ import Container from "@/components/ui/Container";
 import { heroStats } from "@/data/hero";
 import { profileData } from "@/data/profile";
 import { socialLinks } from "@/data/social";
+import HeroWebGLVisual from "@/components/three/HeroWebGLVisual";
 
 function HeroSection() {
   return (
@@ -113,25 +114,8 @@ function HeroSection() {
 
             <Card variant="strong" className="overflow-hidden p-0">
               {/* Top visual placeholder area (Three.js/WebGL slot) */}
-              <div className="relative min-h-[280px] border-b border-white/10 bg-[radial-gradient(circle_at_20%_20%,rgba(34,211,238,0.12),transparent_45%),radial-gradient(circle_at_80%_20%,rgba(139,92,246,0.12),transparent_45%),linear-gradient(to_bottom,rgba(255,255,255,0.02),rgba(255,255,255,0.01))] p-6 md:min-h-[320px]">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs uppercase tracking-[0.2em] text-cyan-300">
-                    Visual Layer
-                  </p>
-                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-gray-300">
-                    Three.js / WebGL (next)
-                  </span>
-                </div>
-
-                {/* Decorative mock “wireframe” lines */}
-                <div className="mt-8 grid gap-4">
-                  <div className="h-20 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm" />
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="h-16 rounded-2xl border border-white/10 bg-white/5" />
-                    <div className="h-16 rounded-2xl border border-white/10 bg-white/5" />
-                  </div>
-                  <div className="h-24 rounded-2xl border border-dashed border-cyan-400/20 bg-cyan-400/5" />
-                </div>
+              <div className="border-b border-white/10 p-3 md:p-4">
+                <HeroWebGLVisual />
               </div>
 
               {/* Bottom stats area */}
