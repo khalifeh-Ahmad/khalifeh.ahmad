@@ -1,4 +1,4 @@
-import { cn } from "../../utils/cn";
+import { cn } from "@/utils/cn";
 
 interface SectionHeadingProps {
   eyebrow?: string;
@@ -16,15 +16,23 @@ function SectionHeading({
   className,
 }: SectionHeadingProps) {
   return (
-    <div className={cn("mb-8", align === "center" && "text-center", className)}>
-      {eyebrow && (
-        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-cyan-400">
-          {eyebrow}
-        </p>
+    <div
+      className={cn(
+        "mb-8 md:mb-10",
+        align === "center" && "text-center",
+        className,
       )}
-      <h2 className="text-2xl font-bold text-white md:text-4xl">{title}</h2>
+    >
+      {eyebrow && <p className="eyebrow mb-2">{eyebrow}</p>}
+      <h2 className="heading-section text-white">{title}</h2>
+
       {description && (
-        <p className="mt-3 max-w-2xl text-sm text-gray-300 md:text-base">
+        <p
+          className={cn(
+            "body-md mt-3 max-w-2xl",
+            align === "center" && "mx-auto",
+          )}
+        >
           {description}
         </p>
       )}

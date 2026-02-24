@@ -1,16 +1,17 @@
 import type { PropsWithChildren } from "react";
-import { cn } from "../../utils/cn";
+import { cn } from "@/utils/cn";
 
 interface CardProps extends PropsWithChildren {
   className?: string;
+  variant?: "default" | "strong";
 }
 
-function Card({ children, className }: CardProps) {
+function Card({ children, className, variant = "default" }: CardProps) {
   return (
     <div
       className={cn(
-        "rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-md",
-        "shadow-[0_10px_40px_rgba(0,0,0,0.25)]",
+        variant === "default" ? "surface" : "surface-strong",
+        "p-6 md:p-7",
         className,
       )}
     >

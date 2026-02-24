@@ -4,7 +4,7 @@ import Card from "../../components/ui/Card";
 
 function SkillsSection() {
   return (
-    <section id="skills" className="py-16 md:py-24">
+    <section id="skills" className="section anchor-offset">
       <Container>
         <SectionHeading
           eyebrow="Skills"
