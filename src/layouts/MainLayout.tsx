@@ -4,6 +4,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import Footer from "@/components/common/Footer";
 import Header from "@/components/common/Header";
 import FloatingThemeSwitcher from "@/components/common/FloatingThemeSwitcher";
+import GlobalWebGLBackground from "@/components/three/GlobalWebGLBackground";
 
 function MainLayout({ children }: PropsWithChildren) {
   const prefersReducedMotion = useReducedMotion();
@@ -71,7 +72,7 @@ function MainLayout({ children }: PropsWithChildren) {
           }}
         />
       </div>
-
+      <GlobalWebGLBackground />
       <Header />
 
       <div className="pt-24 md:pt-28">{children}</div>
