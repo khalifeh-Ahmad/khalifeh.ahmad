@@ -6,11 +6,14 @@ function HeroWebGLVisual() {
   const frameRef = useRef<number | null>(null);
   const [isSupported, setIsSupported] = useState(true);
 
+  // Mouse interaction refs
+  const targetMouse = useRef({ x: 0, y: 0 });
+  const currentMouse = useRef({ x: 0, y: 0 });
+
   useEffect(() => {
     const mountEl = mountRef.current;
     if (!mountEl) return;
 
-    // Respect reduced motion (we'll still render, but much calmer)
     const prefersReducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
@@ -34,8 +37,20 @@ function HeroWebGLVisual() {
     let line: THREE.Line | null = null;
     let points: THREE.Points | null = null;
     let haloMesh: THREE.Mesh | null = null;
+    let coreWire: THREE.Mesh | null = null;
 
     const clock = new THREE.Clock();
+
+    const onMouseMove = (e: MouseEvent) => {
+      const rect = mountEl.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      targetMouse.current = { x, y };
+    };
+
+    const onMouseLeave = () => {
+      targetMouse.current = { x: 0, y: 0 };
+    };
 
     try {
       renderer = new THREE.WebGLRenderer({
@@ -43,6 +58,7 @@ function HeroWebGLVisual() {
         alpha: true,
         powerPreference: "high-performance",
       });
+
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.setSize(mountEl.clientWidth, mountEl.clientHeight);
       renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -62,11 +78,10 @@ function HeroWebGLVisual() {
       group = new THREE.Group();
       scene.add(group);
 
-      // Soft ambient light
+      // Lights
       const ambient = new THREE.AmbientLight(0xffffff, 0.6);
       scene.add(ambient);
 
-      // Accent directional lights
       const cyanLight = new THREE.DirectionalLight(0x22d3ee, 1.2);
       cyanLight.position.set(2, 2, 4);
       scene.add(cyanLight);
@@ -75,7 +90,7 @@ function HeroWebGLVisual() {
       violetLight.position.set(-2, -1, 3);
       scene.add(violetLight);
 
-      // Core wireframe object (icosahedron)
+      // Core wireframe object
       const coreGeometry = new THREE.IcosahedronGeometry(1.35, 1);
       const wireMaterial = new THREE.MeshBasicMaterial({
         color: 0x93c5fd,
@@ -83,10 +98,11 @@ function HeroWebGLVisual() {
         transparent: true,
         opacity: 0.35,
       });
-      const coreWire = new THREE.Mesh(coreGeometry, wireMaterial);
+
+      coreWire = new THREE.Mesh(coreGeometry, wireMaterial);
       group.add(coreWire);
 
-      // Orbit line (custom curve)
+      // Orbit line
       const curvePoints: THREE.Vector3[] = [];
       const loops = 180;
       for (let i = 0; i <= loops; i++) {
@@ -105,6 +121,7 @@ function HeroWebGLVisual() {
         transparent: true,
         opacity: 0.55,
       });
+
       line = new THREE.Line(lineGeometry, lineMaterial);
       line.rotation.z = 0.4;
       group.add(line);
@@ -112,7 +129,6 @@ function HeroWebGLVisual() {
       // Particle cloud
       const particleCount = 140;
       const positions = new Float32Array(particleCount * 3);
-      const sizes = new Float32Array(particleCount);
 
       for (let i = 0; i < particleCount; i++) {
         const i3 = i * 3;
@@ -123,18 +139,12 @@ function HeroWebGLVisual() {
         positions[i3] = radius * Math.sin(phi) * Math.cos(theta);
         positions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta) * 0.55;
         positions[i3 + 2] = radius * Math.cos(phi);
-
-        sizes[i] = 0.8 + Math.random() * 1.6;
       }
 
       const particlesGeometry = new THREE.BufferGeometry();
       particlesGeometry.setAttribute(
         "position",
         new THREE.BufferAttribute(positions, 3),
-      );
-      particlesGeometry.setAttribute(
-        "aSize",
-        new THREE.BufferAttribute(sizes, 1),
       );
 
       const particlesMaterial = new THREE.PointsMaterial({
@@ -149,7 +159,7 @@ function HeroWebGLVisual() {
       points = new THREE.Points(particlesGeometry, particlesMaterial);
       group.add(points);
 
-      // Halo glow plane (subtle)
+      // Halo 1
       const haloGeometry = new THREE.RingGeometry(1.8, 2.0, 64);
       const haloMaterial = new THREE.MeshBasicMaterial({
         color: 0x8b5cf6,
@@ -157,12 +167,13 @@ function HeroWebGLVisual() {
         opacity: 0.12,
         side: THREE.DoubleSide,
       });
+
       haloMesh = new THREE.Mesh(haloGeometry, haloMaterial);
       haloMesh.rotation.x = Math.PI / 2.2;
       haloMesh.rotation.z = 0.35;
       group.add(haloMesh);
 
-      // Secondary halo
+      // Halo 2
       const haloGeometry2 = new THREE.RingGeometry(2.25, 2.35, 64);
       const haloMaterial2 = new THREE.MeshBasicMaterial({
         color: 0x22d3ee,
@@ -170,24 +181,30 @@ function HeroWebGLVisual() {
         opacity: 0.12,
         side: THREE.DoubleSide,
       });
+
       const haloMesh2 = new THREE.Mesh(haloGeometry2, haloMaterial2);
       haloMesh2.rotation.x = Math.PI / 1.95;
       haloMesh2.rotation.z = -0.2;
       group.add(haloMesh2);
 
-      // Resize handling
+      // Resize
       const onResize = () => {
-        if (!mountEl || !renderer || !camera) return;
+        if (!renderer || !camera) return;
+
         const width = mountEl.clientWidth;
-        const height = mountEl.clientHeight;
+        const height = mountEl.clientHeight || 1;
 
         renderer.setSize(width, height);
-        camera.aspect = width / Math.max(height, 1);
+        camera.aspect = width / height;
         camera.updateProjectionMatrix();
       };
 
       resizeObserver = new ResizeObserver(onResize);
       resizeObserver.observe(mountEl);
+
+      // Mouse listeners
+      mountEl.addEventListener("mousemove", onMouseMove);
+      mountEl.addEventListener("mouseleave", onMouseLeave);
 
       // Animate
       const animate = () => {
@@ -196,30 +213,55 @@ function HeroWebGLVisual() {
         const elapsed = clock.getElapsedTime();
         const speed = prefersReducedMotion ? 0.15 : 1;
 
-        group.rotation.y = elapsed * 0.22 * speed;
-        group.rotation.x = Math.sin(elapsed * 0.35) * 0.08;
+        // Smooth mouse interpolation
+        currentMouse.current.x +=
+          (targetMouse.current.x - currentMouse.current.x) * 0.06;
+        currentMouse.current.y +=
+          (targetMouse.current.y - currentMouse.current.y) * 0.06;
+
+        // Base motion
+        const baseRotY = elapsed * 0.22 * speed;
+        const baseRotX = Math.sin(elapsed * 0.35) * 0.08;
+
+        // Add mouse-reactive motion
+        group.rotation.y = baseRotY + currentMouse.current.x * 0.45;
+        group.rotation.x = baseRotX + -currentMouse.current.y * 0.25;
 
         if (line) {
-          line.rotation.x = elapsed * 0.35 * speed;
-          line.rotation.y = elapsed * 0.25 * speed;
+          line.rotation.x =
+            elapsed * 0.35 * speed + currentMouse.current.y * 0.15;
+          line.rotation.y =
+            elapsed * 0.25 * speed + currentMouse.current.x * 0.15;
         }
 
         if (points) {
           points.rotation.y = -elapsed * 0.12 * speed;
           points.rotation.z = elapsed * 0.06 * speed;
 
-          // tiny breathing effect
           const scale = 1 + Math.sin(elapsed * 1.2) * 0.015;
           points.scale.setScalar(scale);
+
+          // Pulse opacity for more life
+          const pm = points.material as THREE.PointsMaterial;
+          pm.opacity = 0.75 + Math.sin(elapsed * 1.8) * 0.12;
         }
 
         if (haloMesh) {
           haloMesh.rotation.z = 0.35 + elapsed * 0.18 * speed;
         }
 
-        // subtle camera drift
-        camera.position.x = Math.sin(elapsed * 0.3) * 0.18;
-        camera.position.y = Math.cos(elapsed * 0.22) * 0.12;
+        if (coreWire) {
+          const s = 1 + Math.sin(elapsed * 1.1) * 0.03;
+          coreWire.scale.setScalar(s);
+          coreWire.rotation.x = elapsed * 0.08 * speed;
+          coreWire.rotation.y = -elapsed * 0.12 * speed;
+        }
+
+        // Camera drift + slight mouse influence
+        camera.position.x =
+          Math.sin(elapsed * 0.3) * 0.18 + currentMouse.current.x * 0.35;
+        camera.position.y =
+          Math.cos(elapsed * 0.22) * 0.12 + -currentMouse.current.y * 0.2;
         camera.lookAt(0, 0, 0);
 
         renderer.render(scene, camera);
@@ -239,19 +281,26 @@ function HeroWebGLVisual() {
 
       resizeObserver?.disconnect();
 
-      // Dispose Three resources
+      mountEl.removeEventListener("mousemove", onMouseMove);
+      mountEl.removeEventListener("mouseleave", onMouseLeave);
+
       if (scene) {
         scene.traverse((obj) => {
-          const mesh = obj as THREE.Mesh;
-          if ((mesh as THREE.Points).geometry) {
-            (mesh as THREE.Points).geometry.dispose?.();
-          }
+          const anyObj = obj as THREE.Object3D & {
+            geometry?: THREE.BufferGeometry;
+            material?:
+              | THREE.Material
+              | THREE.Material[]
+              | THREE.PointsMaterial
+              | undefined;
+          };
 
-          const material = (mesh as THREE.Mesh).material;
-          if (Array.isArray(material)) {
-            material.forEach((m) => m.dispose?.());
+          anyObj.geometry?.dispose?.();
+
+          if (Array.isArray(anyObj.material)) {
+            anyObj.material.forEach((m) => m.dispose?.());
           } else {
-            material?.dispose?.();
+            anyObj.material?.dispose?.();
           }
         });
       }
@@ -284,7 +333,6 @@ function HeroWebGLVisual() {
 
   return (
     <div className="relative h-full min-h-[280px] overflow-hidden rounded-2xl md:min-h-[320px]">
-      {/* Background overlays for polish */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(34,211,238,0.12),transparent_42%),radial-gradient(circle_at_85%_18%,rgba(139,92,246,0.12),transparent_44%),linear-gradient(to_bottom,rgba(255,255,255,0.02),rgba(255,255,255,0.00))]"
@@ -296,7 +344,6 @@ function HeroWebGLVisual() {
 
       <div ref={mountRef} className="absolute inset-0" />
 
-      {/* subtle labels */}
       {/* <div className="pointer-events-none absolute left-4 top-4 flex items-center gap-2">
         <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-cyan-200">
           Three.js

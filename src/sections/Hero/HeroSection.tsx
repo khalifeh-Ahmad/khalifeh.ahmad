@@ -7,6 +7,7 @@ import { heroStats } from "@/data/hero";
 import { profileData } from "@/data/profile";
 import { socialLinks } from "@/data/social";
 import HeroWebGLVisual from "@/components/three/HeroWebGLVisual";
+import { motion } from "framer-motion";
 
 function HeroSection() {
   return (
@@ -16,12 +17,17 @@ function HeroSection() {
           {/* Left Content */}
           <div className="relative">
             {/* Intro badges row */}
-            <div className="flex flex-wrap items-center gap-2">
+            <motion.div
+              className="flex flex-wrap items-center gap-2"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
               <Badge>Open to Opportunities</Badge>
               <Badge className="border-violet-400/25 bg-violet-400/10 text-violet-200">
                 React + TypeScript
               </Badge>
-            </div>
+            </motion.div>
 
             {/* Headline */}
             <div className="mt-6">
@@ -49,7 +55,17 @@ function HeroSection() {
             </div>
 
             {/* CTA Buttons */}
-            <div className="mt-8 flex flex-wrap items-center gap-3">
+            <motion.div
+              className="mt-8 flex flex-wrap items-center gap-3"
+              initial="hidden"
+              animate="visible"
+              variants={{
+                hidden: {},
+                visible: {
+                  transition: { staggerChildren: 0.08, delayChildren: 0.2 },
+                },
+              }}
+            >
               <a
                 href="#projects"
                 className="group inline-flex items-center gap-2 rounded-2xl border border-cyan-400/30 bg-cyan-400/10 px-5 py-3 text-sm font-medium text-cyan-200 transition hover:border-cyan-300/40 hover:bg-cyan-300/10 hover:text-cyan-100"
@@ -76,7 +92,7 @@ function HeroSection() {
                 <FiDownload />
                 Download CV
               </a>
-            </div>
+            </motion.div>
 
             {/* Social / quick links */}
             <div className="mt-6 flex flex-wrap items-center gap-2">
