@@ -2,20 +2,17 @@ function Logo() {
   return (
     <a
       href="#hero"
-      className="group inline-flex items-center gap-3"
       aria-label="Go to homepage section"
+      className="group inline-flex items-center gap-2"
     >
-      <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-sm font-bold text-white shadow-[0_8px_24px_rgba(0,0,0,0.25)] backdrop-blur">
-        KA
+      <span className="relative inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-white/15 bg-white/5 text-sm font-semibold text-white backdrop-blur">
+        <span className="absolute inset-0 bg-gradient-to-br from-cyan-400/10 to-violet-400/10 opacity-80" />
+        <span className="relative">KhA</span>
       </span>
 
-      <span className="hidden sm:block">
-        <span className="block text-sm font-semibold leading-none text-white">
-          Khalifeh Ahmad
-        </span>
-        <span className="mt-1 block text-xs leading-none text-gray-400 group-hover:text-gray-300">
-          Front-End Developer
-        </span>
+      <span className="hidden lg:block text-sm font-medium text-gray-200 group-hover:text-white transition">
+        khalifeh
+        <span className="text-gray-500">.dev</span>
       </span>
     </a>
   );

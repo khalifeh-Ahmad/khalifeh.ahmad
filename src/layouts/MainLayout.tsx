@@ -17,7 +17,8 @@ function MainLayout({ children }: PropsWithChildren) {
 
       <Header />
 
-      <div>{children}</div>
+      {/* top spacing for floating fixed header */}
+      <div className="pt-24 md:pt-28">{children}</div>
     </div>
   );
 }
