@@ -5,6 +5,7 @@ import Footer from "@/components/common/Footer";
 import Header from "@/components/common/Header";
 import FloatingThemeSwitcher from "@/components/common/FloatingThemeSwitcher";
 import GlobalWebGLBackground from "@/components/three/GlobalWebGLBackground";
+import FloatingUtilityDock from "@/components/common/FloatingUtilityDock";
 
 function MainLayout({ children }: PropsWithChildren) {
   const prefersReducedMotion = useReducedMotion();
@@ -78,7 +79,7 @@ function MainLayout({ children }: PropsWithChildren) {
       <div className="pt-24 md:pt-28">{children}</div>
 
       <Footer />
-      <FloatingThemeSwitcher />
+      <FloatingUtilityDock />
     </div>
   );
 }

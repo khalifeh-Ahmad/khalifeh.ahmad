@@ -1,8 +1,8 @@
 import { FiArrowUpRight, FiGithub, FiLinkedin } from "react-icons/fi";
 
 import Container from "@/components/ui/Container";
-import { NAV_ITEMS } from "@/lib/constants";
 import { profileData } from "@/data/profile";
+import { NAV_ITEMS } from "@/lib/constants";
 
 function Footer() {
   const currentYear = new Date().getFullYear();
@@ -39,7 +39,7 @@ function Footer() {
                 className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-gray-200 transition hover:bg-white/10 hover:text-white"
               >
                 <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-xs font-semibold text-white">
-                  KA
+                  KhA
                 </span>
                 <span>
                   khalifeh<span className="text-gray-500">.dev</span>
@@ -113,20 +113,22 @@ function Footer() {
             </div>
           </div>
 
-          {/* Bottom row */}
-          <div className="mt-8 flex flex-col gap-3 border-t border-white/10 pt-5 text-xs text-gray-400 sm:flex-row sm:items-center sm:justify-between">
-            <p>
-              Built with React, TypeScript, Tailwind CSS, Chart.js, and
-              Three.js/WebGL.
-            </p>
+          {/* Bottom row (centered to avoid floating theme switcher overlap) */}
+          <div className="mt-8 border-t border-white/10 pt-5">
+            <div className="flex flex-col items-center gap-3 text-center text-xs text-gray-400">
+              <p>
+                Built with React, TypeScript, Tailwind CSS, Chart.js, and
+                Three.js/WebGL.
+              </p>
 
-            <a
-              href="#hero"
-              className="inline-flex items-center gap-2 self-start rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-gray-300 transition hover:border-white/15 hover:bg-white/10 hover:text-white sm:self-auto"
-            >
-              Back to top
-              <span aria-hidden="true">↑</span>
-            </a>
+              <a
+                href="#hero"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-gray-300 transition hover:border-white/15 hover:bg-white/10 hover:text-white"
+              >
+                Back to top
+                <span aria-hidden="true">↑</span>
+              </a>
+            </div>
           </div>
         </div>
       </Container>
