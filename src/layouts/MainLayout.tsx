@@ -1,5 +1,6 @@
 import type { PropsWithChildren } from "react";
 
+import Footer from "@/components/common/Footer";
 import Header from "@/components/common/Header";
 
 function MainLayout({ children }: PropsWithChildren) {
@@ -17,8 +18,9 @@ function MainLayout({ children }: PropsWithChildren) {
 
       <Header />
 
-      {/* top spacing for floating fixed header */}
       <div className="pt-24 md:pt-28">{children}</div>
+
+      <Footer />
     </div>
   );
 }
