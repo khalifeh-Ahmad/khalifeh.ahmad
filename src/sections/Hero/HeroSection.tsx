@@ -8,6 +8,9 @@ import { profileData } from "@/data/profile";
 import { socialLinks } from "@/data/social";
 import HeroWebGLVisual from "@/components/three/HeroWebGLVisual";
 import { motion } from "framer-motion";
+import ParallaxMouse from "@/components/motion/ParallaxMouse";
+import { hoverLift } from "@/lib/motion";
+import Magnetic from "@/components/motion/Magnetic";
 
 function HeroSection() {
   return (
@@ -30,29 +33,31 @@ function HeroSection() {
             </motion.div>
 
             {/* Headline */}
-            <div className="mt-6">
-              <p className="eyebrow">Front-End Developer Portfolio</p>
+            <ParallaxMouse strengthX={10} strengthY={8}>
+              <div className="mt-6">
+                <p className="eyebrow">Front-End Developer Portfolio</p>
 
-              <h1 className="mt-4 text-4xl font-bold leading-[1.05] text-white md:text-6xl xl:text-7xl">
-                Building modern web interfaces with{" "}
-                <span className="accent-gradient-text">clarity</span>,{" "}
-                <span className="accent-gradient-text">performance</span>, and{" "}
-                <span className="accent-gradient-text">craft</span>.
-              </h1>
+                <h1 className="mt-4 text-4xl font-bold leading-[1.05] text-white md:text-6xl xl:text-7xl">
+                  Building modern web interfaces with{" "}
+                  <span className="accent-gradient-text">clarity</span>,{" "}
+                  <span className="accent-gradient-text">performance</span>, and{" "}
+                  <span className="accent-gradient-text">craft</span>.
+                </h1>
 
-              <p className="body-lg mt-6 max-w-2xl">
-                I’m{" "}
-                <span className="font-semibold text-white">
-                  {profileData.fullName}
-                </span>
-                , a{" "}
-                <span className="font-semibold text-white">
-                  {profileData.role}
-                </span>{" "}
-                focused on creating responsive, maintainable web applications
-                using React, TypeScript, and modern frontend architecture.
-              </p>
-            </div>
+                <p className="body-lg mt-6 max-w-2xl">
+                  I’m{" "}
+                  <span className="font-semibold text-white">
+                    {profileData.fullName}
+                  </span>
+                  , a{" "}
+                  <span className="font-semibold text-white">
+                    {profileData.role}
+                  </span>{" "}
+                  focused on creating responsive, maintainable web applications
+                  using React, TypeScript, and modern frontend architecture.
+                </p>
+              </div>
+            </ParallaxMouse>
 
             {/* CTA Buttons */}
             <motion.div
@@ -66,14 +71,16 @@ function HeroSection() {
                 },
               }}
             >
-              <a
-                href="#projects"
-                className="group inline-flex items-center gap-2 rounded-2xl border border-cyan-400/30 bg-cyan-400/10 px-5 py-3 text-sm font-medium text-cyan-200 transition hover:border-cyan-300/40 hover:bg-cyan-300/10 hover:text-cyan-100"
-              >
-                View Projects
-                <FiArrowRight className="transition-transform group-hover:translate-x-0.5" />
-              </a>
-
+              {" "}
+              <Magnetic>
+                <a
+                  href="#projects"
+                  className="group inline-flex items-center gap-2 rounded-2xl border border-cyan-400/30 bg-cyan-400/10 px-5 py-3 text-sm font-medium text-cyan-200 transition hover:border-cyan-300/40 hover:bg-cyan-300/10 hover:text-cyan-100"
+                >
+                  View Projects
+                  <FiArrowRight className="transition-transform group-hover:translate-x-0.5" />
+                </a>
+              </Magnetic>
               <a
                 href="#contact"
                 className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-medium text-gray-100 transition hover:bg-white/10"
@@ -81,17 +88,18 @@ function HeroSection() {
                 <FiMail />
                 Contact Me
               </a>
-
               {/* Wire this to imported PDF in a later step if needed */}
-              <a
-                href="#"
-                onClick={(e) => e.preventDefault()}
-                className="inline-flex items-center gap-2 rounded-2xl border border-white/10 px-5 py-3 text-sm font-medium text-gray-300 transition hover:border-white/20 hover:bg-white/5 hover:text-white"
-                title="Resume download will be wired to the uploaded PDF in the CV step"
-              >
-                <FiDownload />
-                Download CV
-              </a>
+              <Magnetic>
+                <a
+                  href="#"
+                  onClick={(e) => e.preventDefault()}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-white/10 px-5 py-3 text-sm font-medium text-gray-300 transition hover:border-white/20 hover:bg-white/5 hover:text-white"
+                  title="Resume download will be wired to the uploaded PDF in the CV step"
+                >
+                  <FiDownload />
+                  Download CV
+                </a>
+              </Magnetic>
             </motion.div>
 
             {/* Social / quick links */}

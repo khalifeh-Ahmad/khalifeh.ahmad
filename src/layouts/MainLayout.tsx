@@ -1,11 +1,14 @@
 import type { PropsWithChildren } from "react";
-import { motion, useReducedMotion, useScroll, useSpring} from "framer-motion";
+import { motion, useReducedMotion, useScroll, useSpring } from "framer-motion";
 
 import Footer from "@/components/common/Footer";
 import Header from "@/components/common/Header";
-import GlobalWebGLBackground from "@/components/three/GlobalWebGLBackground";
 import FloatingUtilityDock from "@/components/common/FloatingUtilityDock";
-
+import GlobalWebGLBackground from "@/components/three/GlobalWebGLBackground";
+import useActiveSection from "@/hooks/useActiveSection";
+import useSectionThemeSignal from "@/hooks/useSectionThemeSignal";
+import { NAV_ITEMS } from "@/lib/constants";
+import CursorGlow from "@/components/common/CursorGlow";
 
 function ScrollProgressBar() {
   const { scrollYProgress } = useScroll();
@@ -24,8 +27,14 @@ function ScrollProgressBar() {
   );
 }
 
-
 function MainLayout({ children }: PropsWithChildren) {
+  const { activeSection } = useActiveSection({
+    selectors: NAV_ITEMS.map((item) => item.href),
+    offset: 130,
+    fallbackId: NAV_ITEMS[0]?.id ?? "hero",
+  });
+
+  const sectionSignal = useSectionThemeSignal(activeSection);
   const prefersReducedMotion = useReducedMotion();
 
   const slowFloat = prefersReducedMotion
@@ -52,9 +61,15 @@ function MainLayout({ children }: PropsWithChildren) {
         scale: [1, 1.03, 0.99, 1],
       };
 
+  // TEMP DEBUG (remove after confirming)
+  // console.log("activeSection:", activeSection, "signal:", sectionSignal);
+
   return (
     <div className="relative min-h-screen overflow-x-clip text-gray-100">
-      {/* Ambient background glows */}
+      {/* Global WebGL background (section reactive) */}
+      <GlobalWebGLBackground signal={sectionSignal} />
+      {/* <CursorGlow /> */}
+      {/* Ambient background glows (preserved design) */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10"
@@ -91,11 +106,11 @@ function MainLayout({ children }: PropsWithChildren) {
           }}
         />
       </div>
-      <GlobalWebGLBackground />
+
       <ScrollProgressBar />
       <Header />
 
-      <div className="pt-24 md:pt-28">{children}</div>
+      <div className="relative z-10 pt-24 md:pt-28">{children}</div>
 
       <Footer />
       <FloatingUtilityDock />

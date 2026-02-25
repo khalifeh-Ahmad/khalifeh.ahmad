@@ -10,5 +10,20 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    sourcemap: false,
+    cssCodeSplit: true,
+    chunkSizeWarningLimit: 900,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["react", "react-dom"],
+          motion: ["framer-motion"],
+          charts: ["chart.js", "react-chartjs-2"],
+          three: ["three"],
+        },
+      },
+    },
+  },
   base: "/khalifeh.ahmad/",
 });

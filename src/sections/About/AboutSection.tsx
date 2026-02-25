@@ -1,3 +1,4 @@
+import ParallaxMouse from "@/components/motion/ParallaxMouse";
 import Reveal from "@/components/motion/Reveal";
 import Card from "@/components/ui/Card";
 import Container from "@/components/ui/Container";
@@ -11,11 +12,13 @@ function AboutSection() {
       <Container>
         {" "}
         <Reveal>
-          <SectionHeading
-            eyebrow="About"
-            title="Professional Profile"
-            description="A concise overview of my background, technical focus, and how I approach building modern web applications."
-          />
+          <ParallaxMouse strengthX={10} strengthY={8}>
+            <SectionHeading
+              eyebrow="About"
+              title="Professional Profile"
+              description="A concise overview of my background, technical focus, and how I approach building modern web applications."
+            />
+          </ParallaxMouse>
         </Reveal>
         <Reveal>
           <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">

@@ -10,6 +10,8 @@ import Container from "@/components/ui/Container";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { skillsCategories, skillsMetrics } from "@/data/skills";
 import { ensureChartJSRegistered } from "@/lib/chart";
+import SpotlightCard from "@/components/motion/SpotlightCard";
+import ParallaxMouse from "@/components/motion/ParallaxMouse";
 
 ensureChartJSRegistered();
 
@@ -196,11 +198,13 @@ function SkillsSection() {
     <section id="skills" className="section anchor-offset">
       <Container>
         <Reveal>
-          <SectionHeading
-            eyebrow="Skills"
-            title="Technical Skills"
-            description="Interactive skill visualizations and categorized technologies used to build modern, professional web applications."
-          />
+          <ParallaxMouse strengthX={10} strengthY={8}>
+            <SectionHeading
+              eyebrow="Skills"
+              title="Technical Skills"
+              description="Interactive skill visualizations and categorized technologies used to build modern, professional web applications."
+            />
+          </ParallaxMouse>
         </Reveal>
 
         <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
@@ -285,7 +289,7 @@ function SkillsSection() {
           <div className="grid gap-6">
             {skillsCategories.map((category, index) => (
               <Reveal key={category.id} delay={0.03 * index} once>
-                <TiltCard>
+                <SpotlightCard>
                   <Card
                     className="group p-5 md:p-6"
                     // IMPORTANT: do not add hover:-translate-y-* here
@@ -316,7 +320,7 @@ function SkillsSection() {
                       ))}
                     </div>
                   </Card>
-                </TiltCard>
+                </SpotlightCard>
               </Reveal>
             ))}
           </div>

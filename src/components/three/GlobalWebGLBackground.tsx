@@ -1,83 +1,134 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
-import { useThemeMode } from "@/components/theme/ThemeProvider";
+import type { SectionThemeSignal } from "@/hooks/useSectionThemeSignal";
 
-function GlobalWebGLBackground() {
+interface GlobalWebGLBackgroundProps {
+  signal?: SectionThemeSignal;
+}
+
+function hexToRgb(hex: number) {
+  return {
+    r: ((hex >> 16) & 255) / 255,
+    g: ((hex >> 8) & 255) / 255,
+    b: (hex & 255) / 255,
+  };
+}
+
+function lerp(a: number, b: number, t: number) {
+  return a + (b - a) * t;
+}
+
+function damp(current: number, target: number, smoothing: number) {
+  return current + (target - current) * smoothing;
+}
+
+function getAccentColors(accent: SectionThemeSignal["accent"]) {
+  switch (accent) {
+    case "violet":
+      return {
+        primary: 0x8b5cf6,
+        secondary: 0x22d3ee,
+      };
+    case "sky":
+      return {
+        primary: 0x38bdf8,
+        secondary: 0x8b5cf6,
+      };
+    case "cyan":
+    default:
+      return {
+        primary: 0x22d3ee,
+        secondary: 0x38bdf8,
+      };
+  }
+}
+
+function getOverlayClasses(accent: SectionThemeSignal["accent"]) {
+  // CSS overlays now react too, so section changes become noticeable
+  switch (accent) {
+    case "violet":
+      return {
+        glow: "absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(139,92,246,0.08),transparent_36%),radial-gradient(circle_at_82%_24%,rgba(34,211,238,0.06),transparent_42%)]",
+        fade: "absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#070b14]/18",
+      };
+    case "sky":
+      return {
+        glow: "absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,rgba(56,189,248,0.08),transparent_35%),radial-gradient(circle_at_85%_20%,rgba(139,92,246,0.05),transparent_42%)]",
+        fade: "absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#070b14]/16",
+      };
+    case "cyan":
+    default:
+      return {
+        glow: "absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,rgba(34,211,238,0.08),transparent_35%),radial-gradient(circle_at_85%_20%,rgba(139,92,246,0.05),transparent_42%)]",
+        fade: "absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#070b14]/18",
+      };
+  }
+}
+
+function GlobalWebGLBackground({
+  signal = { accent: "cyan", intensity: 0.75, speed: 0.9 },
+}: GlobalWebGLBackgroundProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const frameRef = useRef<number | null>(null);
-  const { resolvedTheme } = useThemeMode();
+  const [isSupported, setIsSupported] = useState(true);
+
+  const targetSignalRef = useRef<SectionThemeSignal>(signal);
+  const currentVisualRef = useRef({
+    intensity: signal.intensity,
+    speed: signal.speed,
+    primaryRGB: hexToRgb(getAccentColors(signal.accent).primary),
+    secondaryRGB: hexToRgb(getAccentColors(signal.accent).secondary),
+  });
+  
+  
+  const preferredReducedMotion = useMemo(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches,
+    [],
+  );
+
+  useEffect(() => {
+    targetSignalRef.current = signal;
+  }, [signal]);
 
   useEffect(() => {
     const mountEl = mountRef.current;
     if (!mountEl) return;
 
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-
-    // WebGL support check
-    const testCanvas = document.createElement("canvas");
+    const canvas = document.createElement("canvas");
     const gl =
-      testCanvas.getContext("webgl") ||
-      testCanvas.getContext("experimental-webgl");
-    if (!gl) return;
+      canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+
+    if (!gl) {
+      setIsSupported(false);
+      return;
+    }
 
     let renderer: THREE.WebGLRenderer | null = null;
     let scene: THREE.Scene | null = null;
     let camera: THREE.PerspectiveCamera | null = null;
     let resizeObserver: ResizeObserver | null = null;
 
-    let particles: THREE.Points | null = null;
-    let line1: THREE.Line | null = null;
-    let line2: THREE.Line | null = null;
-    let glow1: THREE.Mesh | null = null;
-    let glow2: THREE.Mesh | null = null;
+    let particleSystem: THREE.Points | null = null;
+    let particleMaterial: THREE.PointsMaterial | null = null;
+
+    let linesGroup: THREE.Group | null = null;
+    const lines: THREE.Line[] = [];
+
+    let glowA: THREE.Mesh | null = null;
+    let glowB: THREE.Mesh | null = null;
 
     const mouseTarget = { x: 0, y: 0 };
     const mouseCurrent = { x: 0, y: 0 };
 
     const onMouseMove = (e: MouseEvent) => {
-      const x = e.clientX / window.innerWidth - 0.5;
-      const y = e.clientY / window.innerHeight - 0.5;
-      mouseTarget.x = x;
-      mouseTarget.y = y;
-    };
-
-    const onMouseLeave = () => {
-      mouseTarget.x = 0;
-      mouseTarget.y = 0;
+      mouseTarget.x = e.clientX / window.innerWidth - 0.5;
+      mouseTarget.y = e.clientY / window.innerHeight - 0.5;
     };
 
     const clock = new THREE.Clock();
-
-    // Theme-aware palette
-    const palette =
-      resolvedTheme === "light"
-        ? {
-            pointColor: 0x0ea5e9, // sky-ish
-            lineColor1: 0x0891b2, // cyan-ish
-            lineColor2: 0x7c3aed, // violet
-            glow1: 0x06b6d4,
-            glow2: 0x8b5cf6,
-            pointOpacity: 0.28,
-            lineOpacity1: 0.12,
-            lineOpacity2: 0.1,
-            glowOpacity1: 0.04,
-            glowOpacity2: 0.035,
-          }
-        : {
-            pointColor: 0xcffafe,
-            lineColor1: 0x22d3ee,
-            lineColor2: 0x8b5cf6,
-            glow1: 0x22d3ee,
-            glow2: 0x8b5cf6,
-            pointOpacity: 0.38,
-            lineOpacity1: 0.16,
-            lineOpacity2: 0.12,
-            glowOpacity1: 0.06,
-            glowOpacity2: 0.05,
-          };
 
     try {
       renderer = new THREE.WebGLRenderer({
@@ -90,207 +141,276 @@ function GlobalWebGLBackground() {
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       renderer.setClearColor(0x000000, 0);
-
       mountEl.appendChild(renderer.domElement);
 
       scene = new THREE.Scene();
 
       camera = new THREE.PerspectiveCamera(
-        48,
+        50,
         window.innerWidth / Math.max(window.innerHeight, 1),
         0.1,
         100,
       );
-      camera.position.set(0, 0, 18);
+      camera.position.set(0, 0, 12);
 
-      // Ambient particle field
-      const particleCount = prefersReducedMotion ? 90 : 160;
+      scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+
+      // Particle field
+      const particleCount = preferredReducedMotion ? 140 : 260;
       const positions = new Float32Array(particleCount * 3);
 
       for (let i = 0; i < particleCount; i++) {
         const i3 = i * 3;
-        positions[i3] = (Math.random() - 0.5) * 26; // x
-        positions[i3 + 1] = (Math.random() - 0.5) * 20; // y
-        positions[i3 + 2] = (Math.random() - 0.5) * 8; // z
+        positions[i3] = (Math.random() - 0.5) * 22;
+        positions[i3 + 1] = (Math.random() - 0.5) * 16;
+        positions[i3 + 2] = (Math.random() - 0.5) * 7;
       }
 
-      const particlesGeometry = new THREE.BufferGeometry();
-      particlesGeometry.setAttribute(
+      const particleGeometry = new THREE.BufferGeometry();
+      particleGeometry.setAttribute(
         "position",
         new THREE.BufferAttribute(positions, 3),
       );
 
-      const particlesMaterial = new THREE.PointsMaterial({
-        color: palette.pointColor,
-        size: resolvedTheme === "light" ? 0.06 : 0.05,
+      particleMaterial = new THREE.PointsMaterial({
+        color: 0xcffafe,
+        size: preferredReducedMotion ? 0.04 : 0.05,
         transparent: true,
-        opacity: palette.pointOpacity,
+        opacity: 0.3,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
       });
 
-      particles = new THREE.Points(particlesGeometry, particlesMaterial);
-      scene.add(particles);
+      particleSystem = new THREE.Points(particleGeometry, particleMaterial);
+      scene.add(particleSystem);
 
-      // Flowing line helper
-      const makeWaveLine = (
-        amplitudeY: number,
-        amplitudeZ: number,
-        color: number,
-        opacity: number,
-        yOffset: number,
-      ) => {
+      // Energy lines
+      linesGroup = new THREE.Group();
+      scene.add(linesGroup);
+
+      const lineCount = preferredReducedMotion ? 2 : 4;
+
+      for (let li = 0; li < lineCount; li++) {
         const points: THREE.Vector3[] = [];
-        const segments = 160;
+        const segments = 120;
+        const radiusBase = 3.6 + li * 1.15;
 
         for (let i = 0; i <= segments; i++) {
-          const t = (i / segments) * 2 - 1; // -1..1
-          const x = t * 15;
-          const y = Math.sin(t * Math.PI * 2) * amplitudeY + yOffset;
-          const z = Math.cos(t * Math.PI * 1.5) * amplitudeZ;
-          points.push(new THREE.Vector3(x, y, z));
+          const t = (i / segments) * Math.PI * 2;
+          points.push(
+            new THREE.Vector3(
+              Math.cos(t + li * 0.35) * radiusBase,
+              Math.sin(t * (1.35 + li * 0.12)) * (0.7 + li * 0.16),
+              Math.sin(t + li * 0.8) * (0.7 + li * 0.22),
+            ),
+          );
         }
 
         const geometry = new THREE.BufferGeometry().setFromPoints(points);
         const material = new THREE.LineBasicMaterial({
-          color,
+          color: li % 2 === 0 ? 0x22d3ee : 0x8b5cf6,
           transparent: true,
-          opacity,
+          opacity: 0.08 + li * 0.02,
         });
 
-        return new THREE.Line(geometry, material);
-      };
+        const line = new THREE.Line(geometry, material);
+        line.rotation.z = li * 0.45;
+        line.rotation.x = li * 0.12;
+        linesGroup.add(line);
+        lines.push(line);
+      }
 
-      line1 = makeWaveLine(
-        1.2,
-        1.0,
-        palette.lineColor1,
-        palette.lineOpacity1,
-        2.8,
+      // Glow discs
+      glowA = new THREE.Mesh(
+        new THREE.CircleGeometry(3.0, 48),
+        new THREE.MeshBasicMaterial({
+          color: 0x22d3ee,
+          transparent: true,
+          opacity: 0.06,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        }),
       );
-      line2 = makeWaveLine(
-        1.0,
-        1.2,
-        palette.lineColor2,
-        palette.lineOpacity2,
-        -3.0,
+      glowA.position.set(-4.5, 2.4, -1);
+      scene.add(glowA);
+
+      glowB = new THREE.Mesh(
+        new THREE.CircleGeometry(2.6, 48),
+        new THREE.MeshBasicMaterial({
+          color: 0x8b5cf6,
+          transparent: true,
+          opacity: 0.05,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        }),
       );
+      glowB.position.set(4.8, -2.2, -0.6);
+      scene.add(glowB);
 
-      line1.rotation.z = 0.12;
-      line2.rotation.z = -0.08;
-
-      scene.add(line1);
-      scene.add(line2);
-
-      // Big soft glows (3D planes)
-      const glowGeo1 = new THREE.CircleGeometry(5.2, 48);
-      const glowMat1 = new THREE.MeshBasicMaterial({
-        color: palette.glow1,
-        transparent: true,
-        opacity: palette.glowOpacity1,
-        depthWrite: false,
-      });
-      glow1 = new THREE.Mesh(glowGeo1, glowMat1);
-      glow1.position.set(-5.5, 4.2, -3);
-      scene.add(glow1);
-
-      const glowGeo2 = new THREE.CircleGeometry(4.4, 48);
-      const glowMat2 = new THREE.MeshBasicMaterial({
-        color: palette.glow2,
-        transparent: true,
-        opacity: palette.glowOpacity2,
-        depthWrite: false,
-      });
-      glow2 = new THREE.Mesh(glowGeo2, glowMat2);
-      glow2.position.set(6.0, -3.5, -2.2);
-      scene.add(glow2);
-
-      // Resize handling
       const onResize = () => {
         if (!renderer || !camera) return;
         const width = window.innerWidth;
-        const height = window.innerHeight || 1;
-
+        const height = window.innerHeight;
         renderer.setSize(width, height);
-        camera.aspect = width / height;
+        camera.aspect = width / Math.max(height, 1);
         camera.updateProjectionMatrix();
       };
 
       resizeObserver = new ResizeObserver(onResize);
-      resizeObserver.observe(document.body);
-
+      resizeObserver.observe(mountEl);
       window.addEventListener("mousemove", onMouseMove, { passive: true });
-      window.addEventListener("mouseleave", onMouseLeave);
 
-      // Animation
       const animate = () => {
         if (!renderer || !scene || !camera) return;
 
-        const t = clock.getElapsedTime();
-        const speed = prefersReducedMotion ? 0.15 : 1;
+        const elapsed = clock.getElapsedTime();
+        const target = targetSignalRef.current;
+        const targetColors = getAccentColors(target.accent);
 
-        // Mouse smoothing
-        mouseCurrent.x += (mouseTarget.x - mouseCurrent.x) * 0.03;
-        mouseCurrent.y += (mouseTarget.y - mouseCurrent.y) * 0.03;
+        const current = currentVisualRef.current;
+        const smoothing = preferredReducedMotion ? 0.03 : 0.06;
 
-        // Particles
-        if (particles) {
-          particles.rotation.y = t * 0.015 * speed;
-          particles.rotation.x = Math.sin(t * 0.08) * 0.03 * speed;
+        current.intensity = damp(
+          current.intensity,
+          target.intensity,
+          smoothing,
+        );
+        current.speed = damp(current.speed, target.speed, smoothing);
 
-          particles.position.x = mouseCurrent.x * 0.9;
-          particles.position.y = -mouseCurrent.y * 0.5;
+        const targetPrimaryRGB = hexToRgb(targetColors.primary);
+        const targetSecondaryRGB = hexToRgb(targetColors.secondary);
 
-          const pm = particles.material as THREE.PointsMaterial;
-          pm.opacity =
-            palette.pointOpacity +
-            Math.sin(t * 0.9) * (prefersReducedMotion ? 0.01 : 0.03);
-        }
+        current.primaryRGB.r = damp(
+          current.primaryRGB.r,
+          targetPrimaryRGB.r,
+          smoothing,
+        );
+        current.primaryRGB.g = damp(
+          current.primaryRGB.g,
+          targetPrimaryRGB.g,
+          smoothing,
+        );
+        current.primaryRGB.b = damp(
+          current.primaryRGB.b,
+          targetPrimaryRGB.b,
+          smoothing,
+        );
 
-        // Flow lines
-        if (line1) {
-          line1.position.x = mouseCurrent.x * 1.2;
-          line1.position.y = 2.8 + Math.sin(t * 0.5) * 0.25 * speed;
-          line1.rotation.z = 0.12 + Math.sin(t * 0.25) * 0.03 * speed;
-          line1.rotation.y = mouseCurrent.x * 0.08;
-        }
+        current.secondaryRGB.r = damp(
+          current.secondaryRGB.r,
+          targetSecondaryRGB.r,
+          smoothing,
+        );
+        current.secondaryRGB.g = damp(
+          current.secondaryRGB.g,
+          targetSecondaryRGB.g,
+          smoothing,
+        );
+        current.secondaryRGB.b = damp(
+          current.secondaryRGB.b,
+          targetSecondaryRGB.b,
+          smoothing,
+        );
 
-        if (line2) {
-          line2.position.x = -mouseCurrent.x * 1.0;
-          line2.position.y = -3.0 + Math.cos(t * 0.45) * 0.22 * speed;
-          line2.rotation.z = -0.08 + Math.cos(t * 0.22) * 0.03 * speed;
-          line2.rotation.y = -mouseCurrent.x * 0.06;
-        }
+        mouseCurrent.x = damp(
+          mouseCurrent.x,
+          mouseTarget.x,
+          preferredReducedMotion ? 0.03 : 0.06,
+        );
+        mouseCurrent.y = damp(
+          mouseCurrent.y,
+          mouseTarget.y,
+          preferredReducedMotion ? 0.03 : 0.06,
+        );
 
-        // Glow drift
-        if (glow1) {
-          glow1.position.x =
-            -5.5 + Math.sin(t * 0.22) * 0.5 + mouseCurrent.x * 0.8;
-          glow1.position.y =
-            4.2 + Math.cos(t * 0.18) * 0.45 - mouseCurrent.y * 0.6;
-          glow1.scale.setScalar(1 + Math.sin(t * 0.5) * 0.03);
-        }
+        const speed = preferredReducedMotion ? 0.2 : current.speed;
+        const intensity = preferredReducedMotion
+          ? current.intensity * 0.45
+          : current.intensity;
 
-        if (glow2) {
-          glow2.position.x =
-            6.0 + Math.cos(t * 0.2) * 0.45 - mouseCurrent.x * 0.6;
-          glow2.position.y =
-            -3.5 + Math.sin(t * 0.24) * 0.35 + mouseCurrent.y * 0.5;
-          glow2.scale.setScalar(1 + Math.cos(t * 0.55) * 0.025);
-        }
-
-        // Camera micro drift
-        camera.position.x = mouseCurrent.x * 0.18;
-        camera.position.y = -mouseCurrent.y * 0.12;
+        camera.position.x = lerp(camera.position.x, mouseCurrent.x * 0.7, 0.04);
+        camera.position.y = lerp(
+          camera.position.y,
+          -mouseCurrent.y * 0.45,
+          0.04,
+        );
         camera.lookAt(0, 0, 0);
+
+        if (particleSystem && particleMaterial) {
+          particleSystem.rotation.y = elapsed * 0.02 * speed;
+          particleSystem.rotation.x =
+            Math.sin(elapsed * 0.12) * 0.03 * intensity;
+          particleSystem.position.x = mouseCurrent.x * 0.25;
+          particleSystem.position.y = -mouseCurrent.y * 0.18;
+
+          // Slightly stronger so changes are visible
+          particleMaterial.opacity = 0.18 + intensity * 0.22;
+          particleMaterial.size =
+            (preferredReducedMotion ? 0.04 : 0.05) + intensity * 0.018;
+
+          particleMaterial.color.setRGB(
+            current.primaryRGB.r * 0.75 + current.secondaryRGB.r * 0.25,
+            current.primaryRGB.g * 0.75 + current.secondaryRGB.g * 0.25,
+            current.primaryRGB.b * 0.75 + current.secondaryRGB.b * 0.25,
+          );
+        }
+
+        if (linesGroup) {
+          linesGroup.rotation.y = elapsed * 0.03 * speed;
+          linesGroup.rotation.x = Math.sin(elapsed * 0.18) * 0.06 * intensity;
+          linesGroup.position.x = mouseCurrent.x * 0.5;
+          linesGroup.position.y = -mouseCurrent.y * 0.35;
+        }
+
+        lines.forEach((line, idx) => {
+          line.rotation.z += 0.0009 * (idx % 2 === 0 ? 1 : -1) * speed;
+          line.rotation.x += 0.00035 * (idx % 2 === 0 ? 1 : -1) * speed;
+
+          const mat = line.material as THREE.LineBasicMaterial;
+          const rgb = idx % 2 === 0 ? current.primaryRGB : current.secondaryRGB;
+
+          mat.color.setRGB(rgb.r, rgb.g, rgb.b);
+          mat.opacity = (0.055 + idx * 0.018) * (0.85 + intensity * 0.9);
+        });
+
+        if (glowA) {
+          const mat = glowA.material as THREE.MeshBasicMaterial;
+          mat.color.setRGB(
+            current.primaryRGB.r,
+            current.primaryRGB.g,
+            current.primaryRGB.b,
+          );
+          mat.opacity = 0.035 + intensity * 0.065;
+          glowA.scale.setScalar(
+            1 + Math.sin(elapsed * 0.6) * 0.03 + intensity * 0.1,
+          );
+          glowA.position.x = -4.5 + mouseCurrent.x * 0.7;
+          glowA.position.y = 2.4 - mouseCurrent.y * 0.4;
+        }
+
+        if (glowB) {
+          const mat = glowB.material as THREE.MeshBasicMaterial;
+          mat.color.setRGB(
+            current.secondaryRGB.r,
+            current.secondaryRGB.g,
+            current.secondaryRGB.b,
+          );
+          mat.opacity = 0.03 + intensity * 0.055;
+          glowB.scale.setScalar(
+            1 + Math.cos(elapsed * 0.75) * 0.035 + intensity * 0.08,
+          );
+          glowB.position.x = 4.8 + mouseCurrent.x * 0.55;
+          glowB.position.y = -2.2 - mouseCurrent.y * 0.32;
+        }
 
         renderer.render(scene, camera);
         frameRef.current = window.requestAnimationFrame(animate);
       };
 
       animate();
-    } catch {
-      // graceful fail — no background scene
+    } catch (error) {
+      console.error("GlobalWebGLBackground init error:", error);
+      setIsSupported(false);
     }
 
     return () => {
@@ -299,9 +419,8 @@ function GlobalWebGLBackground() {
         frameRef.current = null;
       }
 
-      resizeObserver?.disconnect();
       window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseleave", onMouseLeave);
+      resizeObserver?.disconnect();
 
       if (scene) {
         scene.traverse((obj) => {
@@ -326,16 +445,23 @@ function GlobalWebGLBackground() {
         mountEl.removeChild(renderer.domElement);
       }
     };
-  }, [resolvedTheme]);
+  }, [preferredReducedMotion]);
+
+  if (!isSupported) return null;
+
+  const overlays = getOverlayClasses(signal.accent);
 
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
+      className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
     >
+      {/* WebGL canvas mount */}
       <div ref={mountRef} className="absolute inset-0" />
-      {/* extra soft overlay for readability */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.02),transparent_48%)]" />
+
+      {/* Section-reactive CSS overlays */}
+      <div className={overlays.glow} />
+      <div className={overlays.fade} />
     </div>
   );
 }
