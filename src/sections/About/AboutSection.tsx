@@ -9,11 +9,14 @@ function AboutSection() {
   return (
     <section id="about" className="section anchor-offset">
       <Container>
-        <SectionHeading
-          eyebrow="About"
-          title="Professional Profile"
-          description="A concise overview of my background, technical focus, and how I approach building modern web applications."
-        />
+        {" "}
+        <Reveal>
+          <SectionHeading
+            eyebrow="About"
+            title="Professional Profile"
+            description="A concise overview of my background, technical focus, and how I approach building modern web applications."
+          />
+        </Reveal>
         <Reveal>
           <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
             {/* Left: narrative */}

@@ -1,11 +1,29 @@
 import type { PropsWithChildren } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion, useScroll, useSpring} from "framer-motion";
 
 import Footer from "@/components/common/Footer";
 import Header from "@/components/common/Header";
-import FloatingThemeSwitcher from "@/components/common/FloatingThemeSwitcher";
 import GlobalWebGLBackground from "@/components/three/GlobalWebGLBackground";
 import FloatingUtilityDock from "@/components/common/FloatingUtilityDock";
+
+
+function ScrollProgressBar() {
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, {
+    stiffness: 120,
+    damping: 20,
+    mass: 0.2,
+  });
+
+  return (
+    <motion.div
+      aria-hidden="true"
+      style={{ scaleX }}
+      className="fixed left-0 right-0 top-0 z-[90] h-[2px] origin-left bg-gradient-to-r from-cyan-300 via-sky-400 to-violet-400"
+    />
+  );
+}
+
 
 function MainLayout({ children }: PropsWithChildren) {
   const prefersReducedMotion = useReducedMotion();
@@ -74,6 +92,7 @@ function MainLayout({ children }: PropsWithChildren) {
         />
       </div>
       <GlobalWebGLBackground />
+      <ScrollProgressBar />
       <Header />
 
       <div className="pt-24 md:pt-28">{children}</div>
