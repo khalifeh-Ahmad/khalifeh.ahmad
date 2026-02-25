@@ -23,4 +23,5 @@ export interface ProjectItem {
   result: string;
   techStack: string[];
   links: ProjectLink[];
+  image:string
 }

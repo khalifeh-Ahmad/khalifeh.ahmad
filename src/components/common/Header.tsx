@@ -1,14 +1,23 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { HiBars3, HiXMark } from "react-icons/hi2";
+import { LayoutGroup, motion } from "framer-motion";
 
 import Logo from "@/components/common/Logo";
 import Container from "@/components/ui/Container";
 import { NAV_ITEMS } from "@/lib/constants";
+import useActiveSection from "@/hooks/useActiveSection";
 import { cn } from "@/utils/cn";
 
 function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
+  const selectors = useMemo(() => NAV_ITEMS.map((item) => item.href), []);
+  const { activeSection } = useActiveSection({
+    selectors,
+    offset: 130,
+    fallbackId: NAV_ITEMS[0]?.id ?? "hero",
+  });
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -53,30 +62,49 @@ function Header() {
               </div>
 
               {/* Center: Desktop pill nav */}
-
               <nav
                 aria-label="Primary"
                 className="hidden min-w-0 items-center justify-center md:flex"
               >
-                <div className="flex items-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-1">
-                  {NAV_ITEMS.map((item) => (
-                    <a
-                      key={item.id}
-                      href={item.href}
-                      className={cn(
-                        "relative rounded-xl px-3 py-2 text-sm text-gray-300 transition",
-                        "hover:bg-white/6 hover:text-white",
-                      )}
-                    >
-                      <span className="relative z-10">{item.label}</span>
-                    </a>
-                  ))}
-                </div>
+                <LayoutGroup>
+                  <div className="flex items-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-1">
+                    {NAV_ITEMS.map((item) => {
+                      const isActive = activeSection === item.id;
+
+                      return (
+                        <a
+                          key={item.id}
+                          href={item.href}
+                          aria-current={isActive ? "page" : undefined}
+                          className={cn(
+                            "relative rounded-xl px-3 py-2 text-sm transition",
+                            "hover:bg-white/6 hover:text-white",
+                            isActive ? "text-white" : "text-gray-300",
+                          )}
+                        >
+                          {isActive && (
+                            <motion.span
+                              layoutId="header-desktop-active-pill"
+                              className="absolute inset-0 rounded-xl border border-white/10 bg-white/10"
+                              transition={{
+                                type: "spring",
+                                stiffness: 340,
+                                damping: 30,
+                              }}
+                              aria-hidden="true"
+                            />
+                          )}
+
+                          <span className="relative z-10">{item.label}</span>
+                        </a>
+                      );
+                    })}
+                  </div>
+                </LayoutGroup>
               </nav>
 
               {/* Right: subtle utility + mobile toggle */}
               <div className="flex items-center gap-2">
-                
                 {/* Decorative status dot / availability chip (desktop only) */}
                 <div className="hidden items-center gap-2 rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-xs text-emerald-300 md:inline-flex">
                   <span className="inline-block h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_14px_rgba(110,231,183,0.8)]" />
@@ -124,25 +152,48 @@ function Header() {
               aria-label="Mobile navigation"
               className="surface-strong overflow-hidden p-2"
             >
-              <div className="flex flex-col">
-                {NAV_ITEMS.map((item) => (
-                  <a
-                    key={item.id}
-                    href={item.href}
-                    onClick={() => setMobileOpen(false)}
-                    className="rounded-xl px-4 py-3 text-sm text-gray-200 transition hover:bg-white/5 hover:text-white"
-                  >
-                    {item.label}
-                  </a>
-                ))}
+              <LayoutGroup>
+                <div className="flex flex-col">
+                  {NAV_ITEMS.map((item) => {
+                    const isActive = activeSection === item.id;
 
-                <div className="mt-2 border-t border-white/10 pt-2">
-                  <div className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm text-emerald-300">
-                    <span className="inline-block h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_14px_rgba(110,231,183,0.8)]" />
-                    Available for opportunities
+                    return (
+                      <a
+                        key={item.id}
+                        href={item.href}
+                        onClick={() => setMobileOpen(false)}
+                        aria-current={isActive ? "page" : undefined}
+                        className={cn(
+                          "relative rounded-xl px-4 py-3 text-sm transition",
+                          "hover:bg-white/5 hover:text-white",
+                          isActive ? "text-white" : "text-gray-200",
+                        )}
+                      >
+                        {isActive && (
+                          <motion.span
+                            layoutId="header-mobile-active-pill"
+                            className="absolute inset-0 rounded-xl border border-white/10 bg-white/5"
+                            transition={{
+                              type: "spring",
+                              stiffness: 340,
+                              damping: 30,
+                            }}
+                            aria-hidden="true"
+                          />
+                        )}
+                        <span className="relative z-10">{item.label}</span>
+                      </a>
+                    );
+                  })}
+
+                  <div className="mt-2 border-t border-white/10 pt-2">
+                    <div className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm text-emerald-300">
+                      <span className="inline-block h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_14px_rgba(110,231,183,0.8)]" />
+                      Available for opportunities
+                    </div>
                   </div>
                 </div>
-              </div>
+              </LayoutGroup>
             </nav>
           </div>
         </Container>

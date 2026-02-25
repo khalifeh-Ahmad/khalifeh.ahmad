@@ -2,14 +2,14 @@ import { useMemo, useState } from "react";
 import type { ChartData, ChartOptions, TooltipItem } from "chart.js";
 import { Bar, Radar } from "react-chartjs-2";
 
+import Reveal from "@/components/motion/Reveal";
+import TiltCard from "@/components/motion/TiltCard";
 import Badge from "@/components/ui/Badge";
 import Card from "@/components/ui/Card";
 import Container from "@/components/ui/Container";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { skillsCategories, skillsMetrics } from "@/data/skills";
 import { ensureChartJSRegistered } from "@/lib/chart";
-import Reveal from "@/components/motion/Reveal";
-import TiltCard from "@/components/motion/TiltCard";
 
 ensureChartJSRegistered();
 
@@ -87,9 +87,7 @@ function SkillsSection() {
     return {
       responsive: true,
       maintainAspectRatio: false,
-      animation: {
-        duration: 700,
-      },
+      animation: { duration: 700 },
       interaction: {
         mode: "nearest",
         intersect: false,
@@ -109,7 +107,6 @@ function SkillsSection() {
                 typeof tooltipItem.raw === "number"
                   ? tooltipItem.raw
                   : Number(tooltipItem.raw ?? 0);
-
               return ` Visual strength: ${rawValue}/100`;
             },
           },
@@ -119,16 +116,9 @@ function SkillsSection() {
         r: {
           min: 0,
           max: 100,
-          ticks: {
-            display: false,
-            stepSize: 20,
-          },
-          angleLines: {
-            color: "rgba(255,255,255,0.08)",
-          },
-          grid: {
-            color: "rgba(255,255,255,0.08)",
-          },
+          ticks: { display: false, stepSize: 20 },
+          angleLines: { color: "rgba(255,255,255,0.08)" },
+          grid: { color: "rgba(255,255,255,0.08)" },
           pointLabels: {
             color: "#cbd5e1",
             font: {
@@ -160,7 +150,6 @@ function SkillsSection() {
                 typeof tooltipItem.raw === "number"
                   ? tooltipItem.raw
                   : Number(tooltipItem.raw ?? 0);
-
               return ` Visual strength: ${rawValue}/100`;
             },
           },
@@ -213,6 +202,7 @@ function SkillsSection() {
             description="Interactive skill visualizations and categorized technologies used to build modern, professional web applications."
           />
         </Reveal>
+
         <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
           {/* Chart panel */}
           <Reveal delay={0.05}>
@@ -228,10 +218,6 @@ function SkillsSection() {
                     profiles across frontend, data, and automation.
                   </p>
                 </div>
-
-                {/* <span className="rounded-full border border-cyan-400/25 bg-cyan-400/10 px-3 py-1 text-xs text-cyan-200">
-                Chart.js
-              </span> */}
               </div>
 
               {/* Chart type tabs */}
@@ -261,7 +247,6 @@ function SkillsSection() {
               <div className="mt-3 flex flex-wrap gap-2">
                 {presetButtons.map((preset) => {
                   const isActive = activePreset === preset.key;
-
                   return (
                     <button
                       key={preset.key}
@@ -295,16 +280,21 @@ function SkillsSection() {
               </p>
             </Card>
           </Reveal>
+
           {/* Category cards */}
-          <div className="grid gap-6" staggerChildren={0.08}>
-            {skillsCategories.map((category) => (
-              <Reveal key={category.id}>
+          <div className="grid gap-6">
+            {skillsCategories.map((category, index) => (
+              <Reveal key={category.id} delay={0.03 * index} once>
                 <TiltCard>
                   <Card
-                    key={category.id}
-                    className="p-5 transition-transform duration-300 hover:-translate-y-1 md:p-6"
+                    className="group p-5 md:p-6"
+                    // IMPORTANT: do not add hover:-translate-y-* here
+                    // TiltCard already controls transform
                   >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
+                    {/* subtle hover glow without transform conflict */}
+                    <div className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 transition duration-500 group-hover:opacity-100 bg-[radial-gradient(circle_at_18%_20%,rgba(34,211,238,0.06),transparent_45%),radial-gradient(circle_at_85%_15%,rgba(139,92,246,0.05),transparent_48%)]" />
+
+                    <div className="relative flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <h3 className="text-base font-semibold text-white md:text-lg">
                           {category.title}
@@ -315,7 +305,7 @@ function SkillsSection() {
                       </div>
                     </div>
 
-                    <div className="mt-4 flex flex-wrap gap-2">
+                    <div className="relative mt-4 flex flex-wrap gap-2">
                       {category.skills.map((skill) => (
                         <Badge
                           key={skill}

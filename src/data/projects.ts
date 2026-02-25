@@ -10,6 +10,7 @@ export const projectsData: ProjectItem[] = [
     status: "In Progress",
     role: "Frontend Engineer / Designer",
     period: "2026",
+    image:"",
     description:
       "A modern, performance-focused developer portfolio built with React, TypeScript, and advanced UI/visual integrations to showcase experience, skills, and projects.",
     challenge:
@@ -42,6 +43,7 @@ export const projectsData: ProjectItem[] = [
     status: "Private",
     role: "Technical Analyst / Automation Developer",
     period: "Recent",
+    image:"",
     description:
       "A collection of automated workflows for operational processes, designed to reduce manual effort and improve reliability.",
     challenge:
@@ -67,6 +69,7 @@ export const projectsData: ProjectItem[] = [
     status: "Private",
     role: "Frontend Developer",
     period: "Client / Internal",
+    image:"",
     description:
       "A responsive dashboard UI for presenting structured data, operational states, and key actions in a clean workflow-oriented interface.",
     challenge:
@@ -92,6 +95,7 @@ export const projectsData: ProjectItem[] = [
     status: "Completed",
     role: "Frontend Web Developer",
     period: "Production",
+    image:"",
     description:
       "Modernized an existing web interface by improving layout responsiveness, maintainability, and user experience across key screens.",
     challenge:
