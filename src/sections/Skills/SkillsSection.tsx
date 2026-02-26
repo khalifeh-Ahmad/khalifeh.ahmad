@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
 import type { ChartData, ChartOptions, TooltipItem } from "chart.js";
-import { Bar, Radar } from "react-chartjs-2";
+import { Bar, Pie, Radar } from "react-chartjs-2";
+import { motion, AnimatePresence } from "framer-motion";
 
 import Reveal from "@/components/motion/Reveal";
-import TiltCard from "@/components/motion/TiltCard";
 import Badge from "@/components/ui/Badge";
 import Card from "@/components/ui/Card";
 import Container from "@/components/ui/Container";
@@ -23,7 +23,7 @@ const PRESETS = {
 } as const;
 
 type PresetKey = keyof typeof PRESETS;
-type ChartView = "radar" | "bar";
+type ChartView = "radar" | "bar" | "pie" | "progress";
 
 function SkillsSection() {
   const [activePreset, setActivePreset] = useState<PresetKey>("core");
@@ -31,13 +31,16 @@ function SkillsSection() {
 
   const activeValues = PRESETS[activePreset];
 
+  const labels = useMemo(() => skillsMetrics.map((m) => m.label), []);
+  const values = useMemo(() => [...activeValues], [activeValues]);
+
   const radarData = useMemo<ChartData<"radar">>(() => {
     return {
-      labels: skillsMetrics.map((item) => item.label),
+      labels,
       datasets: [
         {
           label: "Skills Overview",
-          data: [...activeValues],
+          data: values,
           borderColor: "rgba(34, 211, 238, 0.9)",
           backgroundColor: "rgba(34, 211, 238, 0.12)",
           pointBackgroundColor: "rgba(103, 232, 249, 1)",
@@ -51,15 +54,15 @@ function SkillsSection() {
         },
       ],
     };
-  }, [activeValues]);
+  }, [labels, values]);
 
   const barData = useMemo<ChartData<"bar">>(() => {
     return {
-      labels: skillsMetrics.map((item) => item.label),
+      labels,
       datasets: [
         {
           label: "Skill Strength",
-          data: [...activeValues],
+          data: values,
           backgroundColor: [
             "rgba(34, 211, 238, 0.35)",
             "rgba(56, 189, 248, 0.30)",
@@ -83,26 +86,50 @@ function SkillsSection() {
         },
       ],
     };
-  }, [activeValues]);
+  }, [labels, values]);
+
+  const pieData = useMemo<ChartData<"pie">>(() => {
+    return {
+      labels,
+      datasets: [
+        {
+          label: "Distribution",
+          data: values,
+          backgroundColor: [
+            "rgba(34, 211, 238, 0.50)",
+            "rgba(56, 189, 248, 0.45)",
+            "rgba(139, 92, 246, 0.40)",
+            "rgba(34, 211, 238, 0.40)",
+            "rgba(56, 189, 248, 0.35)",
+            "rgba(139, 92, 246, 0.32)",
+          ],
+          borderColor: "rgba(255,255,255,0.08)",
+          borderWidth: 1,
+          hoverOffset: 10,
+        },
+      ],
+    };
+  }, [labels, values]);
+
+  const commonTooltip = {
+    backgroundColor: "rgba(15, 23, 42, 0.95)",
+    titleColor: "#ffffff",
+    bodyColor: "#d1d5db",
+    borderColor: "rgba(255,255,255,0.12)",
+    borderWidth: 1,
+    padding: 10,
+  } as const;
 
   const radarOptions = useMemo<ChartOptions<"radar">>(() => {
     return {
       responsive: true,
       maintainAspectRatio: false,
       animation: { duration: 700 },
-      interaction: {
-        mode: "nearest",
-        intersect: false,
-      },
+      interaction: { mode: "nearest", intersect: false },
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: "rgba(15, 23, 42, 0.95)",
-          titleColor: "#ffffff",
-          bodyColor: "#d1d5db",
-          borderColor: "rgba(255,255,255,0.12)",
-          borderWidth: 1,
-          padding: 10,
+          ...commonTooltip,
           callbacks: {
             label: (tooltipItem: TooltipItem<"radar">) => {
               const rawValue =
@@ -141,11 +168,7 @@ function SkillsSection() {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: "rgba(15, 23, 42, 0.95)",
-          titleColor: "#ffffff",
-          bodyColor: "#d1d5db",
-          borderColor: "rgba(255,255,255,0.12)",
-          borderWidth: 1,
+          ...commonTooltip,
           callbacks: {
             label: (tooltipItem: TooltipItem<"bar">) => {
               const rawValue =
@@ -170,12 +193,43 @@ function SkillsSection() {
         y: {
           min: 0,
           max: 100,
-          ticks: {
-            color: "#94a3b8",
-            stepSize: 20,
+          ticks: { color: "#94a3b8", stepSize: 20 },
+          grid: { color: "rgba(255,255,255,0.08)" },
+        },
+      },
+    };
+  }, []);
+
+  const pieOptions = useMemo<ChartOptions<"pie">>(() => {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 700 },
+      plugins: {
+        legend: {
+          display: true,
+          position: "bottom",
+          labels: {
+            color: "#cbd5e1",
+            boxWidth: 10,
+            boxHeight: 10,
+            padding: 14,
+            font: {
+              size: 11,
+              family: "Inter, ui-sans-serif, system-ui, sans-serif",
+            },
           },
-          grid: {
-            color: "rgba(255,255,255,0.08)",
+        },
+        tooltip: {
+          ...commonTooltip,
+          callbacks: {
+            label: (tooltipItem: TooltipItem<"pie">) => {
+              const rawValue =
+                typeof tooltipItem.raw === "number"
+                  ? tooltipItem.raw
+                  : Number(tooltipItem.raw ?? 0);
+              return ` Visual strength: ${rawValue}/100`;
+            },
           },
         },
       },
@@ -192,7 +246,16 @@ function SkillsSection() {
   const chartViewButtons: Array<{ key: ChartView; label: string }> = [
     { key: "radar", label: "Radar" },
     { key: "bar", label: "Bar" },
+    { key: "pie", label: "Pie" },
+    { key: "progress", label: "Progress" },
   ];
+
+  const progressItems = useMemo(() => {
+    return skillsMetrics.map((m, idx) => ({
+      label: m.label,
+      value: values[idx] ?? 0,
+    }));
+  }, [values]);
 
   return (
     <section id="skills" className="section anchor-offset">
@@ -270,12 +333,95 @@ function SkillsSection() {
                 })}
               </div>
 
+              {/* View container */}
               <div className="mt-5 h-[340px] rounded-2xl border border-white/10 bg-white/5 p-4 md:h-[380px]">
-                {chartView === "radar" ? (
-                  <Radar data={radarData} options={radarOptions} />
-                ) : (
-                  <Bar data={barData} options={barOptions} />
-                )}
+                <AnimatePresence mode="wait" initial={false}>
+                  {chartView === "radar" && (
+                    <motion.div
+                      key="radar"
+                      className="h-full"
+                      initial={{ opacity: 0, y: 6, filter: "blur(4px)" }}
+                      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                      exit={{ opacity: 0, y: -6, filter: "blur(4px)" }}
+                      transition={{ duration: 0.22, ease: "easeOut" }}
+                    >
+                      <Radar data={radarData} options={radarOptions} />
+                    </motion.div>
+                  )}
+
+                  {chartView === "bar" && (
+                    <motion.div
+                      key="bar"
+                      className="h-full"
+                      initial={{ opacity: 0, y: 6, filter: "blur(4px)" }}
+                      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                      exit={{ opacity: 0, y: -6, filter: "blur(4px)" }}
+                      transition={{ duration: 0.22, ease: "easeOut" }}
+                    >
+                      <Bar data={barData} options={barOptions} />
+                    </motion.div>
+                  )}
+
+                  {chartView === "pie" && (
+                    <motion.div
+                      key="pie"
+                      className="h-full"
+                      initial={{ opacity: 0, y: 6, filter: "blur(4px)" }}
+                      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                      exit={{ opacity: 0, y: -6, filter: "blur(4px)" }}
+                      transition={{ duration: 0.22, ease: "easeOut" }}
+                    >
+                      <Pie data={pieData} options={pieOptions} />
+                    </motion.div>
+                  )}
+
+                  {chartView === "progress" && (
+                    <motion.div
+                      key="progress"
+                      className="h-full overflow-auto pr-1"
+                      initial={{ opacity: 0, y: 6, filter: "blur(4px)" }}
+                      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                      exit={{ opacity: 0, y: -6, filter: "blur(4px)" }}
+                      transition={{ duration: 0.22, ease: "easeOut" }}
+                    >
+                      <div className="space-y-4">
+                        {progressItems.map((item) => (
+                          <div key={item.label}>
+                            <div className="flex items-center justify-between gap-3">
+                              <p className="text-sm font-medium text-gray-200">
+                                {item.label}
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                {Math.round(item.value)}%
+                              </p>
+                            </div>
+
+                            <div className="mt-2 h-2 w-full overflow-hidden rounded-full border border-white/10 bg-white/5">
+                              <motion.div
+                                className="h-full bg-gradient-to-r from-cyan-300 via-sky-400 to-violet-400"
+                                initial={{ width: "0%" }}
+                                animate={{
+                                  width: `${Math.max(0, Math.min(100, item.value))}%`,
+                                }}
+                                transition={{ duration: 0.7, ease: "easeOut" }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+
+                        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                          <p className="text-xs uppercase tracking-[0.16em] text-gray-400">
+                            Insight
+                          </p>
+                          <p className="mt-2 text-sm leading-6 text-gray-200">
+                            This view is perfect for recruiters — clear skill
+                            percentages without chart complexity.
+                          </p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               <p className="mt-4 text-xs text-gray-400">
@@ -290,12 +436,7 @@ function SkillsSection() {
             {skillsCategories.map((category, index) => (
               <Reveal key={category.id} delay={0.03 * index} once>
                 <SpotlightCard>
-                  <Card
-                    className="group p-5 md:p-6"
-                    // IMPORTANT: do not add hover:-translate-y-* here
-                    // TiltCard already controls transform
-                  >
-                    {/* subtle hover glow without transform conflict */}
+                  <Card className="group p-5 md:p-6">
                     <div className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 transition duration-500 group-hover:opacity-100 bg-[radial-gradient(circle_at_18%_20%,rgba(34,211,238,0.06),transparent_45%),radial-gradient(circle_at_85%_15%,rgba(139,92,246,0.05),transparent_48%)]" />
 
                     <div className="relative flex flex-wrap items-start justify-between gap-3">

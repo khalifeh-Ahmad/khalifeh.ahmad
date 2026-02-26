@@ -1,11 +1,12 @@
 import {
+  Chart as ChartJS,
+  ArcElement,
   BarElement,
   CategoryScale,
-  Chart as ChartJS,
   Filler,
   Legend,
-  LineElement,
   LinearScale,
+  LineElement,
   PointElement,
   RadialLinearScale,
   Tooltip,
@@ -17,18 +18,19 @@ export function ensureChartJSRegistered() {
   if (isRegistered) return;
 
   ChartJS.register(
-    // Radar
-    RadialLinearScale,
-    PointElement,
-    LineElement,
-    Filler,
-
-    // Bar
+    // scales
     CategoryScale,
     LinearScale,
-    BarElement,
+    RadialLinearScale,
 
-    // Shared
+    // elements
+    PointElement,
+    LineElement,
+    BarElement,
+    ArcElement,
+
+    // plugins
+    Filler,
     Tooltip,
     Legend,
   );
