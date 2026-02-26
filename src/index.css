@@ -303,3 +303,26 @@ a {
     transition-duration: 0.001ms !important;
   }
 }
+/* =========================================
+   Custom Cursor (Desktop only)
+   ========================================= */
+/* Enable only when custom cursor is mounted */
+html.cursor-enabled,
+html.cursor-enabled body {
+  cursor: none;
+}
+
+/* Keep native cursor for text fields */
+html.cursor-enabled input,
+html.cursor-enabled textarea,
+html.cursor-enabled select {
+  cursor: text;
+}
+
+/* Ensure no native pointer cursor on interactive items */
+html.cursor-enabled a,
+html.cursor-enabled button,
+html.cursor-enabled [role="button"],
+html.cursor-enabled .interactive {
+  cursor: none;
+}

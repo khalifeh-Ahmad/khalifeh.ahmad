@@ -9,6 +9,7 @@ import useActiveSection from "@/hooks/useActiveSection";
 import useSectionThemeSignal from "@/hooks/useSectionThemeSignal";
 import { NAV_ITEMS } from "@/lib/constants";
 import CursorGlow from "@/components/common/CursorGlow";
+import CustomCursor from "@/components/common/CustomCursor";
 
 function ScrollProgressBar() {
   const { scrollYProgress } = useScroll();
@@ -106,7 +107,8 @@ function MainLayout({ children }: PropsWithChildren) {
           }}
         />
       </div>
-
+      <CursorGlow />
+      <CustomCursor />
       <ScrollProgressBar />
       <Header />
 

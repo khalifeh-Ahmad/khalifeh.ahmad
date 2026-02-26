@@ -38,13 +38,13 @@ function CursorGlow() {
   return (
     <motion.div
       aria-hidden="true"
-      className="pointer-events-none fixed left-0 top-0 z-[5] h-[180px] w-[180px] rounded-full blur-3xl"
+      className="pointer-events-none fixed left-0 top-0 z-[15] h-[220px] w-[220px] rounded-full blur-3xl"
       style={{
         x,
         y,
         opacity,
         background:
-          "radial-gradient(circle, rgba(34,211,238,0.14) 0%, rgba(139,92,246,0.08) 45%, transparent 72%)",
+          "radial-gradient(circle, rgba(34,211,238,0.18) 0%, rgba(56,189,248,0.12) 35%, rgba(139,92,246,0.10) 60%, transparent 78%)",
       }}
     />
   );
