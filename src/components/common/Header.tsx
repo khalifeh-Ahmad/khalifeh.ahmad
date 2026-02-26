@@ -19,6 +19,12 @@ function Header() {
     fallbackId: NAV_ITEMS[0]?.id ?? "hero",
   });
 
+  // Normalize to avoid mismatch issues (e.g., "#skills" vs "skills", casing)
+  const normalizedActiveSection = (activeSection ?? "")
+    .replace(/^#/, "")
+    .trim()
+    .toLowerCase();
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
     onScroll();
@@ -69,7 +75,8 @@ function Header() {
                 <LayoutGroup>
                   <div className="flex items-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-1">
                     {NAV_ITEMS.map((item) => {
-                      const isActive = activeSection === item.id;
+                      const itemId = item.id.replace(/^#/, "").toLowerCase();
+                      const isActive = normalizedActiveSection === itemId;
 
                       return (
                         <a
@@ -155,7 +162,8 @@ function Header() {
               <LayoutGroup>
                 <div className="flex flex-col">
                   {NAV_ITEMS.map((item) => {
-                    const isActive = activeSection === item.id;
+                    const itemId = item.id.replace(/^#/, "").toLowerCase();
+                    const isActive = normalizedActiveSection === itemId;
 
                     return (
                       <a

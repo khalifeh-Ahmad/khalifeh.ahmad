@@ -3,6 +3,7 @@ import { FiArrowUpRight, FiGithub, FiLinkedin } from "react-icons/fi";
 import Container from "@/components/ui/Container";
 import { profileData } from "@/data/profile";
 import { NAV_ITEMS } from "@/lib/constants";
+import Logo from "./Logo";
 
 function Footer() {
   const currentYear = new Date().getFullYear();
@@ -34,7 +35,8 @@ function Footer() {
           <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
             {/* Left: brand / summary */}
             <div>
-              <a
+            <Logo />
+              {/* <a
                 href="#hero"
                 className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-gray-200 transition hover:bg-white/10 hover:text-white"
               >
@@ -44,7 +46,7 @@ function Footer() {
                 <span>
                   khalifeh<span className="text-gray-500">.dev</span>
                 </span>
-              </a>
+              </a> */}
 
               <p className="mt-4 max-w-2xl text-sm leading-7 text-gray-300">
                 Frontend engineer focused on building modern, performant, and
@@ -57,6 +59,7 @@ function Footer() {
               </p>
             </div>
 
+           
             {/* Right: links */}
             <div className="grid gap-6 sm:grid-cols-2">
               <div>
