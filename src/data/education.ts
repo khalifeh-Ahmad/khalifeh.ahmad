@@ -2,6 +2,16 @@ import type { CertificationItem, EducationItem } from "@/types/education";
 
 export const educationData: EducationItem[] = [
   {
+    id: "masters-mba",
+    institution: "Geomatika University of Malaysia",
+    degree: "Master Degree",
+    field: "Bussiness Administration",
+    endYear: "",
+    location: "Malaysia",
+    description:
+      "Advanced studies focused on web technologies, systems, and modern internet-based platforms.",
+  },
+  {
     id: "masters-web-science",
     institution: "Syrian Virtual University",
     degree: "Master Degree",

@@ -28,12 +28,16 @@ function ContactWebGLCard() {
     let camera: THREE.PerspectiveCamera | null = null;
     let resizeObserver: ResizeObserver | null = null;
 
-    let group: THREE.Group | null = null;
-    let ring: THREE.LineLoop | null = null;
-    let innerSphere: THREE.Mesh | null = null;
-    let particleField: THREE.Points | null = null;
+    let root: THREE.Group | null = null;
+
+    let globe: THREE.Mesh | null = null;
+    let globeWire: THREE.LineSegments | null = null;
+    let atmosphere: THREE.Mesh | null = null;
+    let orbitRing: THREE.LineLoop | null = null;
+    let stars: THREE.Points | null = null;
 
     const clock = new THREE.Clock();
+
     const mouseTarget = { x: 0, y: 0 };
     const mouseCurrent = { x: 0, y: 0 };
 
@@ -55,96 +59,137 @@ function ContactWebGLCard() {
       renderer.setSize(mountEl.clientWidth, mountEl.clientHeight);
       renderer.setClearColor(0x000000, 0);
       renderer.outputColorSpace = THREE.SRGBColorSpace;
+
       mountEl.appendChild(renderer.domElement);
 
       scene = new THREE.Scene();
 
       camera = new THREE.PerspectiveCamera(
-        48,
+        45,
         mountEl.clientWidth / Math.max(mountEl.clientHeight, 1),
         0.1,
         100,
       );
       camera.position.set(0, 0, 7.2);
 
-      group = new THREE.Group();
-      scene.add(group);
+      root = new THREE.Group();
+      scene.add(root);
 
-      // Lights (soft)
-      scene.add(new THREE.AmbientLight(0xffffff, 0.45));
-      const cyan = new THREE.DirectionalLight(0x22d3ee, 0.85);
-      cyan.position.set(2, 2, 5);
-      scene.add(cyan);
+      // Lighting
+      scene.add(new THREE.AmbientLight(0xffffff, 0.35));
 
-      const violet = new THREE.DirectionalLight(0x8b5cf6, 0.7);
-      violet.position.set(-2, -1, 4);
-      scene.add(violet);
+      const key = new THREE.DirectionalLight(0x22d3ee, 0.95);
+      key.position.set(2.5, 2.0, 5.0);
+      scene.add(key);
 
-      // --- Ring (like screenshot) ---
-      const ringRadius = 2.75;
-      const segments = 220;
-      const ringPts: THREE.Vector3[] = [];
+      const fill = new THREE.DirectionalLight(0x8b5cf6, 0.55);
+      fill.position.set(-2.2, -1.2, 4.0);
+      scene.add(fill);
 
-      for (let i = 0; i < segments; i++) {
-        const t = (i / segments) * Math.PI * 2;
-        ringPts.push(
-          new THREE.Vector3(
-            Math.cos(t) * ringRadius,
-            Math.sin(t) * ringRadius,
-            0,
-          ),
-        );
+      // ===== Stars (subtle) =====
+      {
+        const count = prefersReducedMotion ? 140 : 240;
+        const positions = new Float32Array(count * 3);
+
+        for (let i = 0; i < count; i++) {
+          const i3 = i * 3;
+          positions[i3] = (Math.random() - 0.5) * 18;
+          positions[i3 + 1] = (Math.random() - 0.5) * 12;
+          positions[i3 + 2] = -3 - Math.random() * 6;
+        }
+
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+
+        const mat = new THREE.PointsMaterial({
+          color: 0xcffafe,
+          size: prefersReducedMotion ? 0.03 : 0.04,
+          transparent: true,
+          opacity: 0.35,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        });
+
+        stars = new THREE.Points(geo, mat);
+        root.add(stars);
       }
 
-      const ringGeo = new THREE.BufferGeometry().setFromPoints(ringPts);
-      const ringMat = new THREE.LineBasicMaterial({
-        color: 0xa855f7, // violet-ish ring
-        transparent: true,
-        opacity: 0.95,
-      });
+      // ===== Globe =====
+      const globeRadius = 2.15;
+      {
+        // Base globe material (dark “planet”)
+        const sphereGeo = new THREE.SphereGeometry(globeRadius, 48, 48);
 
-      ring = new THREE.LineLoop(ringGeo, ringMat);
-      ring.position.z = 0.2;
-      group.add(ring);
+        const sphereMat = new THREE.MeshStandardMaterial({
+          color: 0x0b1220,
+          roughness: 0.92,
+          metalness: 0.08,
+          transparent: true,
+          opacity: 0.95,
+        });
 
-      // --- Inner sphere (subtle “planet” feel) ---
-      const sphereGeo = new THREE.IcosahedronGeometry(2.15, 2);
-      const sphereMat = new THREE.MeshStandardMaterial({
-        color: 0x0b1220,
-        roughness: 0.95,
-        metalness: 0.08,
-        transparent: true,
-        opacity: 0.92,
-      });
+        globe = new THREE.Mesh(sphereGeo, sphereMat);
+        globe.position.z = -0.35;
+        root.add(globe);
 
-      innerSphere = new THREE.Mesh(sphereGeo, sphereMat);
-      innerSphere.position.z = -0.35;
-      group.add(innerSphere);
+        // Wireframe overlay (lat/long vibe)
+        const wireGeo = new THREE.WireframeGeometry(sphereGeo);
+        const wireMat = new THREE.LineBasicMaterial({
+          color: 0x93c5fd,
+          transparent: true,
+          opacity: 0.14,
+        });
 
-      // --- Particle field (very subtle) ---
-      const particleCount = prefersReducedMotion ? 60 : 110;
-      const pos = new Float32Array(particleCount * 3);
-      for (let i = 0; i < particleCount; i++) {
-        const i3 = i * 3;
-        pos[i3] = (Math.random() - 0.5) * 7.5;
-        pos[i3 + 1] = (Math.random() - 0.5) * 5.5;
-        pos[i3 + 2] = (Math.random() - 0.5) * 1.8 - 0.6;
+        globeWire = new THREE.LineSegments(wireGeo, wireMat);
+        globeWire.position.copy(globe.position);
+        root.add(globeWire);
+
+        // Atmosphere glow
+        const atmoGeo = new THREE.SphereGeometry(globeRadius * 1.04, 48, 48);
+        const atmoMat = new THREE.MeshBasicMaterial({
+          color: 0x22d3ee,
+          transparent: true,
+          opacity: 0.1,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+          side: THREE.BackSide,
+        });
+
+        atmosphere = new THREE.Mesh(atmoGeo, atmoMat);
+        atmosphere.position.copy(globe.position);
+        root.add(atmosphere);
       }
 
-      const pGeo = new THREE.BufferGeometry();
-      pGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-      const pMat = new THREE.PointsMaterial({
-        color: 0xcffafe,
-        size: prefersReducedMotion ? 0.045 : 0.055,
-        transparent: true,
-        opacity: 0.55,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-      });
+      // ===== Orbit Ring (like your old ring, now orbital) =====
+      {
+        const ringRadius = 2.95;
+        const segments = 260;
+        const pts: THREE.Vector3[] = [];
 
-      particleField = new THREE.Points(pGeo, pMat);
-      particleField.position.z = -0.8;
-      group.add(particleField);
+        for (let i = 0; i < segments; i++) {
+          const t = (i / segments) * Math.PI * 2;
+          pts.push(
+            new THREE.Vector3(
+              Math.cos(t) * ringRadius,
+              Math.sin(t) * ringRadius,
+              0,
+            ),
+          );
+        }
+
+        const geo = new THREE.BufferGeometry().setFromPoints(pts);
+        const mat = new THREE.LineBasicMaterial({
+          color: 0xa855f7,
+          transparent: true,
+          opacity: 0.85,
+        });
+
+        orbitRing = new THREE.LineLoop(geo, mat);
+        orbitRing.position.z = 0.15;
+        orbitRing.rotation.x = Math.PI / 2.25; // tilt ring like orbit
+        orbitRing.rotation.z = -0.25;
+        root.add(orbitRing);
+      }
 
       // Resize
       const onResize = () => {
@@ -162,36 +207,42 @@ function ContactWebGLCard() {
       mountEl.addEventListener("mousemove", onMouseMove);
 
       const animate = () => {
-        if (!renderer || !scene || !camera || !group) return;
+        if (!renderer || !scene || !camera || !root) return;
 
         const t = clock.getElapsedTime();
         const speed = prefersReducedMotion ? 0.18 : 1;
 
-        // mouse smoothing
+        // Smooth mouse follow
         mouseCurrent.x += (mouseTarget.x - mouseCurrent.x) * 0.06;
         mouseCurrent.y += (mouseTarget.y - mouseCurrent.y) * 0.06;
 
-        group.rotation.y = t * 0.12 * speed;
-        group.rotation.x = Math.sin(t * 0.26) * 0.04;
+        // subtle root parallax
+        root.position.x = mouseCurrent.x * 0.6;
+        root.position.y = -mouseCurrent.y * 0.42;
 
-        group.position.x = mouseCurrent.x * 0.55;
-        group.position.y = -mouseCurrent.y * 0.4;
+        // globe rotation
+        if (globe) globe.rotation.y = t * 0.22 * speed;
+        if (globeWire) globeWire.rotation.y = t * 0.24 * speed;
 
-        if (innerSphere) {
-          innerSphere.rotation.y = t * 0.08 * speed;
-          innerSphere.rotation.x = t * 0.04 * speed;
-        }
-
-        if (ring) {
-          // tiny “breathing” ring
+        // atmosphere “breathing”
+        if (atmosphere) {
           const s =
-            1 + Math.sin(t * 1.25) * (prefersReducedMotion ? 0.003 : 0.01);
-          ring.scale.setScalar(s);
+            1 + Math.sin(t * 1.05) * (prefersReducedMotion ? 0.002 : 0.008);
+          atmosphere.scale.setScalar(s);
+          (atmosphere.material as THREE.MeshBasicMaterial).opacity =
+            0.08 + Math.sin(t * 0.9) * 0.02;
         }
 
-        if (particleField) {
-          particleField.rotation.z = t * 0.05 * speed;
+        // orbit motion
+        if (orbitRing) {
+          orbitRing.rotation.z = -0.25 + t * 0.08 * speed;
+          const ringScale =
+            1 + Math.sin(t * 1.25) * (prefersReducedMotion ? 0.002 : 0.006);
+          orbitRing.scale.setScalar(ringScale);
         }
+
+        // stars drift (very subtle)
+        if (stars) stars.rotation.z = t * 0.01 * speed;
 
         camera.lookAt(0, 0, 0);
         renderer.render(scene, camera);
@@ -235,10 +286,10 @@ function ContactWebGLCard() {
 
   return (
     <div className="relative h-[340px] overflow-hidden rounded-2xl border border-white/10 bg-[#0b1220]/55 md:h-[380px]">
-      {/* Grid overlay like screenshot */}
+      {/* Grid overlay */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-[0.22]"
+        className="pointer-events-none absolute inset-0 opacity-[0.18]"
         style={{
           backgroundImage:
             "linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)",
@@ -249,7 +300,7 @@ function ContactWebGLCard() {
       {/* Soft vignette */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(0,0,0,0.0),rgba(0,0,0,0.55))]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(0,0,0,0.0),rgba(0,0,0,0.60))]"
       />
 
       {/* WebGL mount */}

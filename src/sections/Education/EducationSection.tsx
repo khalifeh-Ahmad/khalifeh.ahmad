@@ -185,7 +185,7 @@ function EducationSection() {
                   })}
                 </StaggerContainer>
 
-                <motion.div
+                {/* <motion.div
                   whileHover={{ y: -1 }}
                   className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-white/15 hover:bg-white/10"
                 >
@@ -196,7 +196,7 @@ function EducationSection() {
                     Frontend frameworks, JavaScript fundamentals,
                     testing/debugging, and SQL/database development.
                   </p>
-                </motion.div>
+                </motion.div> */}
               </Card>
             </TiltCard>
           </Reveal>
