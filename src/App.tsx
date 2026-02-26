@@ -12,9 +12,9 @@ const ExperienceSection = lazy(
   () => import("./sections/Experience/ExperienceSection"),
 );
 const SkillsSection = lazy(() => import("./sections/Skills/SkillsSection"));
-const ProjectsSection = lazy(
-  () => import("./sections/Projects/ProjectsSection"),
-);
+// const ProjectsSection = lazy(
+//   () => import("./sections/Projects/ProjectsSection"),
+// );
 const EducationSection = lazy(
   () => import("./sections/Education/EducationSection"),
 );
@@ -52,7 +52,7 @@ function App() {
               <AboutSection />
               <ExperienceSection />
               <SkillsSection />
-              <ProjectsSection />
+              {/* <ProjectsSection /> */}
               <EducationSection />
               <ContactSection />
             </Suspense>

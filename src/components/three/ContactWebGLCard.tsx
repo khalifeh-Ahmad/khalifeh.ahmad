@@ -30,23 +30,26 @@ function ContactWebGLCard() {
 
     let root: THREE.Group | null = null;
 
-    let globe: THREE.Mesh | null = null;
-    let globeWire: THREE.LineSegments | null = null;
+    let earth: THREE.Mesh | null = null;
+    let clouds: THREE.Mesh | null = null;
     let atmosphere: THREE.Mesh | null = null;
     let orbitRing: THREE.LineLoop | null = null;
     let stars: THREE.Points | null = null;
 
     const clock = new THREE.Clock();
-
     const mouseTarget = { x: 0, y: 0 };
     const mouseCurrent = { x: 0, y: 0 };
 
     const onMouseMove = (e: MouseEvent) => {
       const rect = mountEl.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / rect.width - 0.5;
-      const y = (e.clientY - rect.top) / rect.height - 0.5;
-      mouseTarget.x = x;
-      mouseTarget.y = y;
+      mouseTarget.x = (e.clientX - rect.left) / rect.width - 0.5;
+      mouseTarget.y = (e.clientY - rect.top) / rect.height - 0.5;
+    };
+
+    const disposeMat = (m: THREE.Material | THREE.Material[] | undefined) => {
+      if (!m) return;
+      if (Array.isArray(m)) m.forEach((mm) => mm.dispose?.());
+      else m.dispose?.();
     };
 
     try {
@@ -60,6 +63,9 @@ function ContactWebGLCard() {
       renderer.setClearColor(0x000000, 0);
       renderer.outputColorSpace = THREE.SRGBColorSpace;
 
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.12;
+
       mountEl.appendChild(renderer.domElement);
 
       scene = new THREE.Scene();
@@ -70,42 +76,41 @@ function ContactWebGLCard() {
         0.1,
         100,
       );
-      camera.position.set(0, 0, 7.2);
+      camera.position.set(0, 0, 6.6);
 
       root = new THREE.Group();
       scene.add(root);
 
-      // Lighting
-      scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+      // Lighting (make sure we never get black)
+      scene.add(new THREE.AmbientLight(0xffffff, 0.32));
 
-      const key = new THREE.DirectionalLight(0x22d3ee, 0.95);
-      key.position.set(2.5, 2.0, 5.0);
-      scene.add(key);
+      const sun = new THREE.DirectionalLight(0xffffff, 1.65);
+      sun.position.set(5.2, 2.0, 6.0);
+      scene.add(sun);
 
-      const fill = new THREE.DirectionalLight(0x8b5cf6, 0.55);
-      fill.position.set(-2.2, -1.2, 4.0);
-      scene.add(fill);
+      const rim = new THREE.DirectionalLight(0x38bdf8, 0.55);
+      rim.position.set(-5.0, -1.4, 6.2);
+      scene.add(rim);
 
-      // ===== Stars (subtle) =====
+      // Stars
       {
-        const count = prefersReducedMotion ? 140 : 240;
+        const count = prefersReducedMotion ? 160 : 300;
         const positions = new Float32Array(count * 3);
-
         for (let i = 0; i < count; i++) {
           const i3 = i * 3;
           positions[i3] = (Math.random() - 0.5) * 18;
           positions[i3 + 1] = (Math.random() - 0.5) * 12;
-          positions[i3 + 2] = -3 - Math.random() * 6;
+          positions[i3 + 2] = -3 - Math.random() * 7;
         }
 
         const geo = new THREE.BufferGeometry();
         geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
 
         const mat = new THREE.PointsMaterial({
-          color: 0xcffafe,
+          color: 0xe2e8f0,
           size: prefersReducedMotion ? 0.03 : 0.04,
           transparent: true,
-          opacity: 0.35,
+          opacity: 0.33,
           depthWrite: false,
           blending: THREE.AdditiveBlending,
         });
@@ -114,58 +119,11 @@ function ContactWebGLCard() {
         root.add(stars);
       }
 
-      // ===== Globe =====
-      const globeRadius = 2.15;
+      // Orbit ring (already visible, keep it)
       {
-        // Base globe material (dark “planet”)
-        const sphereGeo = new THREE.SphereGeometry(globeRadius, 48, 48);
-
-        const sphereMat = new THREE.MeshStandardMaterial({
-          color: 0x0b1220,
-          roughness: 0.92,
-          metalness: 0.08,
-          transparent: true,
-          opacity: 0.95,
-        });
-
-        globe = new THREE.Mesh(sphereGeo, sphereMat);
-        globe.position.z = -0.35;
-        root.add(globe);
-
-        // Wireframe overlay (lat/long vibe)
-        const wireGeo = new THREE.WireframeGeometry(sphereGeo);
-        const wireMat = new THREE.LineBasicMaterial({
-          color: 0x93c5fd,
-          transparent: true,
-          opacity: 0.14,
-        });
-
-        globeWire = new THREE.LineSegments(wireGeo, wireMat);
-        globeWire.position.copy(globe.position);
-        root.add(globeWire);
-
-        // Atmosphere glow
-        const atmoGeo = new THREE.SphereGeometry(globeRadius * 1.04, 48, 48);
-        const atmoMat = new THREE.MeshBasicMaterial({
-          color: 0x22d3ee,
-          transparent: true,
-          opacity: 0.1,
-          blending: THREE.AdditiveBlending,
-          depthWrite: false,
-          side: THREE.BackSide,
-        });
-
-        atmosphere = new THREE.Mesh(atmoGeo, atmoMat);
-        atmosphere.position.copy(globe.position);
-        root.add(atmosphere);
-      }
-
-      // ===== Orbit Ring (like your old ring, now orbital) =====
-      {
-        const ringRadius = 2.95;
-        const segments = 260;
+        const ringRadius = 3.05;
+        const segments = 320;
         const pts: THREE.Vector3[] = [];
-
         for (let i = 0; i < segments; i++) {
           const t = (i / segments) * Math.PI * 2;
           pts.push(
@@ -181,15 +139,85 @@ function ContactWebGLCard() {
         const mat = new THREE.LineBasicMaterial({
           color: 0xa855f7,
           transparent: true,
-          opacity: 0.85,
+          opacity: 0.55,
         });
 
         orbitRing = new THREE.LineLoop(geo, mat);
-        orbitRing.position.z = 0.15;
-        orbitRing.rotation.x = Math.PI / 2.25; // tilt ring like orbit
+        orbitRing.position.z = 0.25;
+        orbitRing.rotation.x = Math.PI / 2.08;
         orbitRing.rotation.z = -0.25;
         root.add(orbitRing);
       }
+
+      // === Load textures with LoadingManager, THEN build globe ===
+      const manager = new THREE.LoadingManager();
+      const loader = new THREE.TextureLoader(manager);
+
+      const tex = {
+        day: loader.load("/textures/earth/earth_day.jpg"),
+        bump: loader.load("/textures/earth/earth_bump.jpg"),
+        spec: loader.load("/textures/earth/earth_spec.jpg"),
+        clouds: loader.load("/textures/earth/earth_clouds.png"),
+      };
+
+      // Correct colorSpace
+      tex.day.colorSpace = THREE.SRGBColorSpace;
+      tex.clouds.colorSpace = THREE.SRGBColorSpace;
+      // bump/spec stay linear (default)
+
+      Object.values(tex).forEach((t) => (t.anisotropy = 8));
+
+      manager.onLoad = () => {
+        if (!root) return;
+
+        // Earth
+        const radius = 2.18;
+        const earthGeo = new THREE.SphereGeometry(radius, 96, 96);
+
+        const earthMat = new THREE.MeshStandardMaterial({
+          map: tex.day,
+          normalMap: tex.bump,
+          normalScale: new THREE.Vector2(0.6, 0.6),
+          roughness: 0.86,
+          metalness: 0.06,
+          // Use spec as roughness variation (oceans smoother)
+          roughnessMap: tex.spec,
+        });
+
+        earth = new THREE.Mesh(earthGeo, earthMat);
+        earth.position.z = -0.15;
+        earth.rotation.y = Math.PI * 0.35;
+        root.add(earth);
+
+        // Clouds
+        const cloudsGeo = new THREE.SphereGeometry(2.24, 96, 96);
+        const cloudsMat = new THREE.MeshLambertMaterial({
+          map: tex.clouds,
+          transparent: true,
+          opacity: 0.52,
+          depthWrite: false,
+        });
+
+        clouds = new THREE.Mesh(cloudsGeo, cloudsMat);
+        clouds.position.z = -0.15;
+        clouds.rotation.y = Math.PI * 0.37;
+        root.add(clouds);
+
+        // Atmosphere
+        const atmoGeo = new THREE.SphereGeometry(2.32, 96, 96);
+        const atmoMat = new THREE.MeshBasicMaterial({
+          color: 0x38bdf8,
+          transparent: true,
+          opacity: 0.09,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+          side: THREE.BackSide,
+        });
+
+        atmosphere = new THREE.Mesh(atmoGeo, atmoMat);
+        atmosphere.position.z = -0.15;
+        root.add(atmosphere);
+      };
 
       // Resize
       const onResize = () => {
@@ -210,21 +238,17 @@ function ContactWebGLCard() {
         if (!renderer || !scene || !camera || !root) return;
 
         const t = clock.getElapsedTime();
-        const speed = prefersReducedMotion ? 0.18 : 1;
+        const speed = prefersReducedMotion ? 0.15 : 1;
 
-        // Smooth mouse follow
         mouseCurrent.x += (mouseTarget.x - mouseCurrent.x) * 0.06;
         mouseCurrent.y += (mouseTarget.y - mouseCurrent.y) * 0.06;
 
-        // subtle root parallax
-        root.position.x = mouseCurrent.x * 0.6;
-        root.position.y = -mouseCurrent.y * 0.42;
+        root.position.x = mouseCurrent.x * 0.55;
+        root.position.y = -mouseCurrent.y * 0.4;
 
-        // globe rotation
-        if (globe) globe.rotation.y = t * 0.22 * speed;
-        if (globeWire) globeWire.rotation.y = t * 0.24 * speed;
+        if (earth) earth.rotation.y = Math.PI * 0.35 + t * 0.14 * speed;
+        if (clouds) clouds.rotation.y = Math.PI * 0.37 + t * 0.22 * speed;
 
-        // atmosphere “breathing”
         if (atmosphere) {
           const s =
             1 + Math.sin(t * 1.05) * (prefersReducedMotion ? 0.002 : 0.008);
@@ -233,15 +257,7 @@ function ContactWebGLCard() {
             0.08 + Math.sin(t * 0.9) * 0.02;
         }
 
-        // orbit motion
-        if (orbitRing) {
-          orbitRing.rotation.z = -0.25 + t * 0.08 * speed;
-          const ringScale =
-            1 + Math.sin(t * 1.25) * (prefersReducedMotion ? 0.002 : 0.006);
-          orbitRing.scale.setScalar(ringScale);
-        }
-
-        // stars drift (very subtle)
+        if (orbitRing) orbitRing.rotation.z = -0.25 + t * 0.06 * speed;
         if (stars) stars.rotation.z = t * 0.01 * speed;
 
         camera.lookAt(0, 0, 0);
@@ -270,9 +286,7 @@ function ContactWebGLCard() {
             material?: THREE.Material | THREE.Material[];
           };
           anyObj.geometry?.dispose?.();
-          if (Array.isArray(anyObj.material))
-            anyObj.material.forEach((m) => m.dispose?.());
-          else anyObj.material?.dispose?.();
+          disposeMat(anyObj.material);
         });
       }
 
@@ -286,24 +300,20 @@ function ContactWebGLCard() {
 
   return (
     <div className="relative h-[340px] overflow-hidden rounded-2xl border border-white/10 bg-[#0b1220]/55 md:h-[380px]">
-      {/* Grid overlay */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-[0.18]"
+        className="pointer-events-none absolute inset-0 opacity-[0.14]"
         style={{
           backgroundImage:
             "linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)",
           backgroundSize: "36px 36px",
         }}
       />
-
-      {/* Soft vignette */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(0,0,0,0.0),rgba(0,0,0,0.60))]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(0,0,0,0.0),rgba(0,0,0,0.62))]"
       />
 
-      {/* WebGL mount */}
       {supported ? (
         <div ref={mountRef} className="absolute inset-0" />
       ) : (
@@ -319,7 +329,6 @@ function ContactWebGLCard() {
         </div>
       )}
 
-      {/* Border glow line */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-300/40 to-transparent"

@@ -16,8 +16,8 @@ import { contactLinks, contactMethods } from "@/data/contact";
 import { profileData } from "@/data/profile";
 import { cn } from "@/utils/cn";
 import Reveal from "@/components/motion/Reveal";
-import ContactWebGLCard from "@/components/three/ContactWebGLCard";
 import Magnetic from "@/components/motion/Magnetic";
+import HeroWebGLVisual from "@/components/three/HeroWebGLVisual";
 
 function ContactSection() {
   const emailHref = profileData.email ? `mailto:${profileData.email}` : "#";
@@ -276,7 +276,8 @@ function ContactSection() {
                   </div>
 
                   <div className="mt-4">
-                    <ContactWebGLCard />
+                    {/* <ContactWebGLCard /> */}
+                    <HeroWebGLVisual />
                   </div>
 
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">

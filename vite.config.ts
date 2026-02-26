@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "node:path";
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
@@ -25,5 +25,5 @@ export default defineConfig({
       },
     },
   },
-  base: "/khalifeh.ahmad/",
-});
+  base: mode === "production" ? "/khalifeh.ahmad/" : "/",
+}));

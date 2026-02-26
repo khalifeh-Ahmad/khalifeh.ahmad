@@ -6,11 +6,11 @@ import Container from "@/components/ui/Container";
 import { heroStats } from "@/data/hero";
 import { profileData } from "@/data/profile";
 import { socialLinks } from "@/data/social";
-import HeroWebGLVisual from "@/components/three/HeroWebGLVisual";
 import { motion } from "framer-motion";
 import ParallaxMouse from "@/components/motion/ParallaxMouse";
 import { hoverLift } from "@/lib/motion";
 import Magnetic from "@/components/motion/Magnetic";
+import ContactWebGLCard from "@/components/three/ContactWebGLCard";
 
 function HeroSection() {
   return (
@@ -139,7 +139,8 @@ function HeroSection() {
             <Card variant="strong" className="overflow-hidden p-0">
               {/* Top visual placeholder area (Three.js/WebGL slot) */}
               <div className="border-b border-white/10 p-3 md:p-4">
-                <HeroWebGLVisual />
+                {/* <HeroWebGLVisual /> */}
+                <ContactWebGLCard />
               </div>
 
               {/* Bottom stats area */}
