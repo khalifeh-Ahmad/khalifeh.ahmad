@@ -3,31 +3,59 @@ import { useEffect, useRef } from "react";
 function CustomCursor() {
   const cursorRef = useRef<HTMLDivElement>(null);
   const followerRef = useRef<HTMLDivElement>(null);
+
   const mousePos = useRef({ x: 0, y: 0 });
   const followerPos = useRef({ x: 0, y: 0 });
   const rafRef = useRef<number>(0);
+
   const enabledRef = useRef(false);
+  const visibleRef = useRef(false);
 
   useEffect(() => {
     const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
     const reduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
+
     if (isTouchDevice || reduceMotion) return;
 
-    const enableCursor = () => {
-      if (enabledRef.current) return;
-      enabledRef.current = true;
-
-      // Hide native cursor only after we KNOW our cursor is running
-      document.documentElement.classList.add("cursor-enabled");
-
+    const show = () => {
+      if (!enabledRef.current) return;
+      if (visibleRef.current) return;
+      visibleRef.current = true;
       cursorRef.current?.classList.add("opacity-100");
       followerRef.current?.classList.add("opacity-100");
     };
 
+    const hide = () => {
+      if (!enabledRef.current) return;
+      if (!visibleRef.current) return;
+      visibleRef.current = false;
+      cursorRef.current?.classList.remove("opacity-100");
+      followerRef.current?.classList.remove("opacity-100");
+    };
+
+    const enable = () => {
+      if (enabledRef.current) return;
+      enabledRef.current = true;
+
+      // Hide native cursor only after we know our custom cursor is active.
+      document.documentElement.classList.add("cursor-enabled");
+
+      // Ensure base classes exist
+      cursorRef.current?.classList.add("bg-violet-500");
+      followerRef.current?.classList.add(
+        "w-10",
+        "h-10",
+        "border-violet-500/50",
+      );
+
+      show();
+    };
+
     const onMouseMove = (e: MouseEvent) => {
-      enableCursor();
+      enable();
+      show();
 
       mousePos.current = { x: e.clientX, y: e.clientY };
 
@@ -57,18 +85,6 @@ function CustomCursor() {
       rafRef.current = window.requestAnimationFrame(animate);
     };
 
-    const hide = () => {
-      cursorRef.current?.classList.remove("opacity-100");
-      followerRef.current?.classList.remove("opacity-100");
-    };
-
-    const show = () => {
-      // Only show if cursor enabled
-      if (!enabledRef.current) return;
-      cursorRef.current?.classList.add("opacity-100");
-      followerRef.current?.classList.add("opacity-100");
-    };
-
     const isInteractiveTarget = (target: EventTarget | null) => {
       const el = target as HTMLElement | null;
       if (!el) return false;
@@ -83,11 +99,11 @@ function CustomCursor() {
       if (!enabledRef.current) return;
       if (!isInteractiveTarget(e.target)) return;
 
-      // dot: cyan + scale 0.5
+      // Dot: cyan + scale 0.5
       cursorRef.current?.classList.add("scale-50", "bg-cyan-400");
       cursorRef.current?.classList.remove("bg-violet-500");
 
-      // follower: 60x60 + cyan border + cyan bg tint
+      // Ring: 60x60 + cyan border + cyan bg tint
       followerRef.current?.classList.add(
         "w-[60px]",
         "h-[60px]",
@@ -123,13 +139,22 @@ function CustomCursor() {
       );
     };
 
-    window.addEventListener("mousemove", onMouseMove, { passive: true });
-    window.addEventListener("blur", hide);
-    window.addEventListener("mouseenter", show);
-    window.addEventListener("mouseleave", hide);
+    // ✅ Robust visibility control:
+    // Hide only when tab/window actually becomes inactive.
+    const onBlur = () => hide();
+    const onFocus = () => show();
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") hide();
+      else show();
+    };
 
+    window.addEventListener("mousemove", onMouseMove, { passive: true });
     document.addEventListener("pointerover", onPointerOver, { passive: true });
     document.addEventListener("pointerout", onPointerOut, { passive: true });
+
+    window.addEventListener("blur", onBlur);
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
     rafRef.current = window.requestAnimationFrame(animate);
 
@@ -137,12 +162,12 @@ function CustomCursor() {
       document.documentElement.classList.remove("cursor-enabled");
 
       window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("blur", hide);
-      window.removeEventListener("mouseenter", show);
-      window.removeEventListener("mouseleave", hide);
-
       document.removeEventListener("pointerover", onPointerOver);
       document.removeEventListener("pointerout", onPointerOut);
+
+      window.removeEventListener("blur", onBlur);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
 
       window.cancelAnimationFrame(rafRef.current);
     };
