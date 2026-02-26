@@ -9,4 +9,5 @@ export interface Profile {
   linkedin?: string;
   github?: string;
   cvFileName?: string;
+  resumeUrl:string
 }

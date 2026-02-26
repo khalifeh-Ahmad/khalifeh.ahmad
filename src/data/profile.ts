@@ -12,4 +12,5 @@ export const profileData: Profile = {
   linkedin: 'https://www.linkedin.com/in/khalifeh-ahmad/', 
   github: 'https://github.com/khalifeh-ahmad', 
   cvFileName: 'Khalifeh.Ahmad.pdf',
+  resumeUrl:'/public/Khalifeh-Ahmad.pdf'
 }
