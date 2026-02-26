@@ -1,14 +1,14 @@
-import { FiArrowRight, FiDownload, FiMail } from "react-icons/fi";
+import { FiArrowRight, FiMail } from "react-icons/fi";
 
-import Badge from "@/components/ui/Badge";
 import Card from "@/components/ui/Card";
 import Container from "@/components/ui/Container";
+import AvailabilityBadges from "@/components/ui/AvailabilityBadges";
+import { CTAButton, ResumeButton } from "@/components/ui/Button";
 import { heroStats } from "@/data/hero";
 import { profileData } from "@/data/profile";
 import { socialLinks } from "@/data/social";
 import { motion } from "framer-motion";
 import ParallaxMouse from "@/components/motion/ParallaxMouse";
-import { hoverLift } from "@/lib/motion";
 import Magnetic from "@/components/motion/Magnetic";
 import ContactWebGLCard from "@/components/three/ContactWebGLCard";
 
@@ -26,10 +26,10 @@ function HeroSection() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <Badge>Open to Opportunities</Badge>
-              <Badge className="border-violet-400/25 bg-violet-400/10 text-violet-200">
-                React + TypeScript
-              </Badge>
+              <AvailabilityBadges
+                secondaryLabel="React + TypeScript"
+                secondaryClassName="border-violet-400/25 bg-violet-400/10 text-violet-200"
+              />
             </motion.div>
 
             {/* Headline */}
@@ -71,34 +71,33 @@ function HeroSection() {
                 },
               }}
             >
-              {" "}
               <Magnetic>
-                <a
+                <CTAButton
                   href="#projects"
-                  className="group inline-flex items-center gap-2 rounded-2xl border border-cyan-400/30 bg-cyan-400/10 px-5 py-3 text-sm font-medium text-cyan-200 transition hover:border-cyan-300/40 hover:bg-cyan-300/10 hover:text-cyan-100"
+                  variant="primary"
+                  className="group"
+                  iconRight={
+                    <FiArrowRight className="transition-transform group-hover:translate-x-0.5" />
+                  }
                 >
                   View Projects
-                  <FiArrowRight className="transition-transform group-hover:translate-x-0.5" />
-                </a>
+                </CTAButton>
               </Magnetic>
-              <a
+
+              <CTAButton
                 href="#contact"
-                className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-medium text-gray-100 transition hover:bg-white/10"
+                variant="secondary"
+                iconLeft={<FiMail />}
               >
-                <FiMail />
                 Contact Me
-              </a>
-              {/* Wire this to imported PDF in a later step if needed */}
+              </CTAButton>
+
               <Magnetic>
-                <a
-                  href="#"
-                  onClick={(e) => e.preventDefault()}
-                  className="inline-flex items-center gap-2 rounded-2xl border border-white/10 px-5 py-3 text-sm font-medium text-gray-300 transition hover:border-white/20 hover:bg-white/5 hover:text-white"
-                  title="Resume download will be wired to the uploaded PDF in the CV step"
-                >
-                  <FiDownload />
-                  Download CV
-                </a>
+                <ResumeButton
+                  variant="ghost"
+                  className="inline-flex items-center gap-2"
+                  label="Download CV"
+                />
               </Magnetic>
             </motion.div>
 
@@ -133,7 +132,7 @@ function HeroSection() {
             {/* Glow accent behind panel */}
             <div
               aria-hidden="true"
-              className="absolute -inset-4 -z-10 rounded-[2rem] bg-gradient-to-br from-cyan-500/10 via-transparent to-violet-500/10 blur-2xl"
+              className="absolute -inset-4 -z-10 rounded-4xl bg-linear-to-br from-cyan-500/10 via-transparent to-violet-500/10 blur-2xl"
             />
 
             <Card variant="strong" className="overflow-hidden p-0">

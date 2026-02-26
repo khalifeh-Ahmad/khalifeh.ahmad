@@ -1,78 +1,19 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import * as THREE from "three";
+import { useThreeRenderer } from "@/hooks/useThreeRenderer";
 
 function HeroWebGLVisual() {
   const mountRef = useRef<HTMLDivElement | null>(null);
-  const frameRef = useRef<number | null>(null);
-  const [isSupported, setIsSupported] = useState(true);
-
-  // Mouse interaction refs
   const targetMouse = useRef({ x: 0, y: 0 });
   const currentMouse = useRef({ x: 0, y: 0 });
 
-  useEffect(() => {
-    const mountEl = mountRef.current;
-    if (!mountEl) return;
-
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-
-    // WebGL support check
-    const canvas = document.createElement("canvas");
-    const gl =
-      canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
-    if (!gl) {
-      setIsSupported(false);
-      return;
-    }
-
-    let renderer: THREE.WebGLRenderer | null = null;
-    let scene: THREE.Scene | null = null;
-    let camera: THREE.PerspectiveCamera | null = null;
-    let resizeObserver: ResizeObserver | null = null;
-
-    // Objects we animate
-    let group: THREE.Group | null = null;
-    let line: THREE.Line | null = null;
-    let points: THREE.Points | null = null;
-    let haloMesh: THREE.Mesh | null = null;
-    let coreWire: THREE.Mesh | null = null;
-
-    const clock = new THREE.Clock();
-
-    const onMouseMove = (e: MouseEvent) => {
-      const rect = mountEl.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / rect.width - 0.5;
-      const y = (e.clientY - rect.top) / rect.height - 0.5;
-      targetMouse.current = { x, y };
-    };
-
-    const onMouseLeave = () => {
-      targetMouse.current = { x: 0, y: 0 };
-    };
-
-    try {
-      renderer = new THREE.WebGLRenderer({
-        antialias: true,
-        alpha: true,
-        powerPreference: "high-performance",
-      });
-
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.setSize(mountEl.clientWidth, mountEl.clientHeight);
-      renderer.outputColorSpace = THREE.SRGBColorSpace;
-      mountEl.appendChild(renderer.domElement);
-
-      scene = new THREE.Scene();
-
-      camera = new THREE.PerspectiveCamera(
-        48,
-        Math.max(mountEl.clientWidth / Math.max(mountEl.clientHeight, 1), 1),
-        0.1,
-        100,
-      );
-      camera.position.set(0, 0, 6.5);
+  const { supported: isSupported } = useThreeRenderer(mountRef, {
+    onSetup: ({ scene, camera, mountEl, prefersReducedMotion }) => {
+      let group: THREE.Group | null = null;
+      let line: THREE.Line | null = null;
+      let points: THREE.Points | null = null;
+      let haloMesh: THREE.Mesh | null = null;
+      let coreWire: THREE.Mesh | null = null;
 
       // Group root
       group = new THREE.Group();
@@ -187,131 +128,82 @@ function HeroWebGLVisual() {
       haloMesh2.rotation.z = -0.2;
       group.add(haloMesh2);
 
-      // Resize
-      const onResize = () => {
-        if (!renderer || !camera) return;
-
-        const width = mountEl.clientWidth;
-        const height = mountEl.clientHeight || 1;
-
-        renderer.setSize(width, height);
-        camera.aspect = width / height;
-        camera.updateProjectionMatrix();
+      const onMouseMove = (e: MouseEvent) => {
+        const rect = mountEl.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width - 0.5;
+        const y = (e.clientY - rect.top) / rect.height - 0.5;
+        targetMouse.current = { x, y };
       };
 
-      resizeObserver = new ResizeObserver(onResize);
-      resizeObserver.observe(mountEl);
+      const onMouseLeave = () => {
+        targetMouse.current = { x: 0, y: 0 };
+      };
 
-      // Mouse listeners
       mountEl.addEventListener("mousemove", onMouseMove);
       mountEl.addEventListener("mouseleave", onMouseLeave);
 
-      // Animate
-      const animate = () => {
-        if (!renderer || !scene || !camera || !group) return;
+      return {
+        onAnimate: (elapsed: number) => {
+          if (!group) return;
 
-        const elapsed = clock.getElapsedTime();
-        const speed = prefersReducedMotion ? 0.15 : 1;
+          const speed = prefersReducedMotion ? 0.15 : 1;
 
-        // Smooth mouse interpolation
-        currentMouse.current.x +=
-          (targetMouse.current.x - currentMouse.current.x) * 0.06;
-        currentMouse.current.y +=
-          (targetMouse.current.y - currentMouse.current.y) * 0.06;
+          // Smooth mouse interpolation
+          currentMouse.current.x +=
+            (targetMouse.current.x - currentMouse.current.x) * 0.06;
+          currentMouse.current.y +=
+            (targetMouse.current.y - currentMouse.current.y) * 0.06;
 
-        // Base motion
-        const baseRotY = elapsed * 0.22 * speed;
-        const baseRotX = Math.sin(elapsed * 0.35) * 0.08;
+          // Base motion
+          const baseRotY = elapsed * 0.22 * speed;
+          const baseRotX = Math.sin(elapsed * 0.35) * 0.08;
 
-        // Add mouse-reactive motion
-        group.rotation.y = baseRotY + currentMouse.current.x * 0.45;
-        group.rotation.x = baseRotX + -currentMouse.current.y * 0.25;
+          // Add mouse-reactive motion
+          group.rotation.y = baseRotY + currentMouse.current.x * 0.45;
+          group.rotation.x = baseRotX + -currentMouse.current.y * 0.25;
 
-        if (line) {
-          line.rotation.x =
-            elapsed * 0.35 * speed + currentMouse.current.y * 0.15;
-          line.rotation.y =
-            elapsed * 0.25 * speed + currentMouse.current.x * 0.15;
-        }
-
-        if (points) {
-          points.rotation.y = -elapsed * 0.12 * speed;
-          points.rotation.z = elapsed * 0.06 * speed;
-
-          const scale = 1 + Math.sin(elapsed * 1.2) * 0.015;
-          points.scale.setScalar(scale);
-
-          // Pulse opacity for more life
-          const pm = points.material as THREE.PointsMaterial;
-          pm.opacity = 0.75 + Math.sin(elapsed * 1.8) * 0.12;
-        }
-
-        if (haloMesh) {
-          haloMesh.rotation.z = 0.35 + elapsed * 0.18 * speed;
-        }
-
-        if (coreWire) {
-          const s = 1 + Math.sin(elapsed * 1.1) * 0.03;
-          coreWire.scale.setScalar(s);
-          coreWire.rotation.x = elapsed * 0.08 * speed;
-          coreWire.rotation.y = -elapsed * 0.12 * speed;
-        }
-
-        // Camera drift + slight mouse influence
-        camera.position.x =
-          Math.sin(elapsed * 0.3) * 0.18 + currentMouse.current.x * 0.35;
-        camera.position.y =
-          Math.cos(elapsed * 0.22) * 0.12 + -currentMouse.current.y * 0.2;
-        camera.lookAt(0, 0, 0);
-
-        renderer.render(scene, camera);
-        frameRef.current = window.requestAnimationFrame(animate);
-      };
-
-      animate();
-    } catch {
-      setIsSupported(false);
-    }
-
-    return () => {
-      if (frameRef.current) {
-        window.cancelAnimationFrame(frameRef.current);
-        frameRef.current = null;
-      }
-
-      resizeObserver?.disconnect();
-
-      mountEl.removeEventListener("mousemove", onMouseMove);
-      mountEl.removeEventListener("mouseleave", onMouseLeave);
-
-      if (scene) {
-        scene.traverse((obj) => {
-          const anyObj = obj as THREE.Object3D & {
-            geometry?: THREE.BufferGeometry;
-            material?:
-              | THREE.Material
-              | THREE.Material[]
-              | THREE.PointsMaterial
-              | undefined;
-          };
-
-          anyObj.geometry?.dispose?.();
-
-          if (Array.isArray(anyObj.material)) {
-            anyObj.material.forEach((m) => m.dispose?.());
-          } else {
-            anyObj.material?.dispose?.();
+          if (line) {
+            line.rotation.x =
+              elapsed * 0.35 * speed + currentMouse.current.y * 0.15;
+            line.rotation.y =
+              elapsed * 0.25 * speed + currentMouse.current.x * 0.15;
           }
-        });
-      }
 
-      renderer?.dispose();
+          if (points) {
+            points.rotation.y = -elapsed * 0.12 * speed;
+            points.rotation.z = elapsed * 0.06 * speed;
 
-      if (renderer?.domElement && mountEl.contains(renderer.domElement)) {
-        mountEl.removeChild(renderer.domElement);
-      }
-    };
-  }, []);
+            const scale = 1 + Math.sin(elapsed * 1.2) * 0.015;
+            points.scale.setScalar(scale);
+
+            const pm = points.material as THREE.PointsMaterial;
+            pm.opacity = 0.75 + Math.sin(elapsed * 1.8) * 0.12;
+          }
+
+          if (haloMesh) {
+            haloMesh.rotation.z = 0.35 + elapsed * 0.18 * speed;
+          }
+
+          if (coreWire) {
+            const s = 1 + Math.sin(elapsed * 1.1) * 0.03;
+            coreWire.scale.setScalar(s);
+            coreWire.rotation.x = elapsed * 0.08 * speed;
+            coreWire.rotation.y = -elapsed * 0.12 * speed;
+          }
+
+          camera.position.x =
+            Math.sin(elapsed * 0.3) * 0.18 + currentMouse.current.x * 0.35;
+          camera.position.y =
+            Math.cos(elapsed * 0.22) * 0.12 + -currentMouse.current.y * 0.2;
+          camera.lookAt(0, 0, 0);
+        },
+        onBeforeDispose: () => {
+          mountEl.removeEventListener("mousemove", onMouseMove);
+          mountEl.removeEventListener("mouseleave", onMouseLeave);
+        },
+      };
+    },
+  });
 
   if (!isSupported) {
     return (
@@ -339,7 +231,7 @@ function HeroWebGLVisual() {
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/35 to-transparent"
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-cyan-300/35 to-transparent"
       />
 
       <div ref={mountRef} className="absolute inset-0" />

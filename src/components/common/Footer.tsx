@@ -2,32 +2,20 @@ import { FiArrowUpRight, FiGithub, FiLinkedin } from "react-icons/fi";
 
 import Container from "@/components/ui/Container";
 import { profileData } from "@/data/profile";
+import { contactLinks } from "@/data/contact";
 import { NAV_ITEMS } from "@/lib/constants";
 import Logo from "./Logo";
 
 function Footer() {
   const currentYear = new Date().getFullYear();
 
-  const socialItems = [
-    {
-      id: "linkedin",
-      label: "LinkedIn",
-      href: profileData.linkedin || "#",
-      icon: <FiLinkedin size={16} />,
-    },
-    {
-      id: "github",
-      label: "GitHub",
-      href: profileData.github || "#",
-      icon: <FiGithub size={16} />,
-    },
-  ] as const;
+  const socialItems = contactLinks;
 
   return (
     <footer className="relative mt-8 border-t border-white/10">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/30 to-transparent"
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-cyan-300/30 to-transparent"
       />
 
       <Container>
@@ -85,32 +73,41 @@ function Footer() {
                   Profiles
                 </p>
                 <div className="mt-3 grid gap-2">
-                  {socialItems.map((item) => (
-                    <a
-                      key={item.id}
-                      href={item.href}
-                      target={
-                        item.href.startsWith("http") ? "_blank" : undefined
-                      }
-                      rel={
-                        item.href.startsWith("http")
-                          ? "noreferrer noopener"
-                          : undefined
-                      }
-                      className="group inline-flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-gray-300 transition hover:border-white/15 hover:bg-white/10 hover:text-white"
-                    >
-                      <span className="inline-flex items-center gap-2">
-                        <span className="text-gray-300 group-hover:text-white">
-                          {item.icon}
+                  {socialItems.map((item) => {
+                    const icon =
+                      item.id === "linkedin" ? (
+                        <FiLinkedin size={16} />
+                      ) : (
+                        <FiGithub size={16} />
+                      );
+
+                    return (
+                      <a
+                        key={item.id}
+                        href={item.href}
+                        target={
+                          item.href.startsWith("http") ? "_blank" : undefined
+                        }
+                        rel={
+                          item.href.startsWith("http")
+                            ? "noreferrer noopener"
+                            : undefined
+                        }
+                        className="group inline-flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-gray-300 transition hover:border-white/15 hover:bg-white/10 hover:text-white"
+                      >
+                        <span className="inline-flex items-center gap-2">
+                          <span className="text-gray-300 group-hover:text-white">
+                            {icon}
+                          </span>
+                          {item.label}
                         </span>
-                        {item.label}
-                      </span>
-                      <FiArrowUpRight
-                        size={15}
-                        className="text-gray-400 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-white"
-                      />
-                    </a>
-                  ))}
+                        <FiArrowUpRight
+                          size={15}
+                          className="text-gray-400 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-white"
+                        />
+                      </a>
+                    );
+                  })}
                 </div>
               </div>
             </div>
