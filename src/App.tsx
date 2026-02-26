@@ -2,6 +2,9 @@ import { Suspense, lazy } from "react";
 
 import MainLayout from "./layouts/MainLayout";
 import Seo from "./components/seo/Seo";
+import useBootLoader from "./hooks/useBootLoader";
+import { AnimatePresence } from "framer-motion";
+import LoadingScreen from "./components/common/LoadingScreen";
 
 const HeroSection = lazy(() => import("./sections/Hero/HeroSection"));
 const AboutSection = lazy(() => import("./sections/About/AboutSection"));
@@ -26,20 +29,36 @@ function SectionFallback() {
 }
 
 function App() {
+  const { loading, progress } = useBootLoader({
+    minDurationMs: 2000, // longer duration
+    waitForFonts: true,
+    tickMs: 28,
+  });
   return (
     <>
       <Seo />
-      <MainLayout>
-        <Suspense fallback={<SectionFallback />}>
-          <HeroSection />
-          <AboutSection />
-          <ExperienceSection />
-          <SkillsSection />
-          <ProjectsSection />
-          <EducationSection />
-          <ContactSection />
-        </Suspense>
-      </MainLayout>
+      <AnimatePresence mode="wait" initial={false}>
+        {loading ? (
+          <LoadingScreen
+            key="loading"
+            title="khalifeh.dev"
+            subtitle="Preparing the experience…"
+            progress={progress}
+          />
+        ) : (
+          <MainLayout>
+            <Suspense fallback={<SectionFallback />}>
+              <HeroSection />
+              <AboutSection />
+              <ExperienceSection />
+              <SkillsSection />
+              <ProjectsSection />
+              <EducationSection />
+              <ContactSection />
+            </Suspense>
+          </MainLayout>
+        )}
+      </AnimatePresence>
     </>
   );
 }
