@@ -5,11 +5,12 @@ import { profileData } from "@/data/profile";
 import { contactLinks } from "@/data/contact";
 import { NAV_ITEMS } from "@/lib/constants";
 import Logo from "./Logo";
+import { motion, useReducedMotion } from "framer-motion";
 
 function Footer() {
   const currentYear = new Date().getFullYear();
   const socialItems = contactLinks;
-
+  const prefersReducedMotion = useReducedMotion();
   return (
     <footer className="relative mt-10 pb-10">
       {/* subtle section divider */}
@@ -144,12 +145,18 @@ function Footer() {
                     Three.js/WebGL.
                   </p>
 
-                  <a
+                  <motion.a
                     href="#hero"
-                    className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm text-gray-200 transition hover:border-white/15 hover:bg-white/10 hover:text-white"
+                    whileHover={
+                      prefersReducedMotion ? undefined : { y: -2, scale: 1.02 }
+                    }
+                    whileTap={
+                      prefersReducedMotion ? undefined : { scale: 0.97 }
+                    }
+                    className="inline-flex items-center gap-2 rounded-2xl border border-[#FAAD14]/35 bg-[#FAAD14]/15 px-5 py-2.5 text-sm font-semibold text-[#FAAD14] shadow-[0_10px_26px_rgba(250,173,20,0.14)] backdrop-blur-xl transition hover:bg-[#FAAD14]/25 hover:border-[#FAAD14]/55 hover:text-[#FFD666]"
                   >
                     Back to top <span aria-hidden="true">↑</span>
-                  </a>
+                  </motion.a>
                 </div>
               </div>
             </div>

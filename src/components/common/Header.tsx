@@ -92,7 +92,7 @@ function Header() {
                           {isActive && (
                             <motion.span
                               layoutId="header-desktop-active-pill"
-                              className="absolute inset-0 rounded-xl border border-white/10 bg-white/10"
+                              className="absolute inset-0 rounded-xl border border-[#FAAD14]/35 bg-[#FAAD14] shadow-[0_0_0_1px_rgba(250,173,20,0.15),0_10px_26px_rgba(250,173,20,0.18)]"
                               transition={{
                                 type: "spring",
                                 stiffness: 340,
@@ -113,10 +113,10 @@ function Header() {
               {/* Right: subtle utility + mobile toggle */}
               <div className="flex items-center gap-2">
                 {/* Decorative status dot / availability chip (desktop only) */}
-                <div className="hidden items-center gap-2 rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-xs text-emerald-300 md:inline-flex">
+                {/* <div className="hidden items-center gap-2 rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-xs text-emerald-300 md:inline-flex">
                   <span className="inline-block h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_14px_rgba(110,231,183,0.8)]" />
                   Available
-                </div>
+                </div> */}
 
                 <button
                   type="button"
@@ -180,7 +180,7 @@ function Header() {
                         {isActive && (
                           <motion.span
                             layoutId="header-mobile-active-pill"
-                            className="absolute inset-0 rounded-xl border border-white/10 bg-white/5"
+                            className="absolute inset-0 rounded-xl border border-[#FAAD14]/35 bg-[#FAAD14]/15 shadow-[0_0_0_1px_rgba(250,173,20,0.12)]"
                             transition={{
                               type: "spring",
                               stiffness: 340,
