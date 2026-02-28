@@ -41,19 +41,19 @@ function getOverlayClasses(accent: SectionThemeSignal["accent"]) {
   switch (accent) {
     case "violet":
       return {
-        glow: "absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(139,92,246,0.08),transparent_36%),radial-gradient(circle_at_82%_24%,rgba(34,211,238,0.06),transparent_42%)]",
-        fade: "absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#070b14]/18",
+        glow: "absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(139,92,246,0.08),transparent_36%),radial-gradient(circle_at_82%_24%,rgba(34,211,238,0.06),transparent_42%)] dark:bg-[radial-gradient(circle_at_18%_12%,rgba(139,92,246,0.12),transparent_36%),radial-gradient(circle_at_82%_24%,rgba(34,211,238,0.1),transparent_42%)]",
+        fade: "absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#070b14]/18 dark:to-[#f6f8fc]/12",
       };
     case "sky":
       return {
-        glow: "absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,rgba(56,189,248,0.08),transparent_35%),radial-gradient(circle_at_85%_20%,rgba(139,92,246,0.05),transparent_42%)]",
-        fade: "absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#070b14]/16",
+        glow: "absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,rgba(56,189,248,0.08),transparent_35%),radial-gradient(circle_at_85%_20%,rgba(139,92,246,0.05),transparent_42%)] dark:bg-[radial-gradient(circle_at_15%_10%,rgba(56,189,248,0.12),transparent_35%),radial-gradient(circle_at_85%_20%,rgba(139,92,246,0.08),transparent_42%)]",
+        fade: "absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#070b14]/16 dark:to-[#f6f8fc]/10",
       };
     case "cyan":
     default:
       return {
-        glow: "absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,rgba(34,211,238,0.08),transparent_35%),radial-gradient(circle_at_85%_20%,rgba(139,92,246,0.05),transparent_42%)]",
-        fade: "absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#070b14]/18",
+        glow: "absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,rgba(34,211,238,0.08),transparent_35%),radial-gradient(circle_at_85%_20%,rgba(139,92,246,0.05),transparent_42%)] dark:bg-[radial-gradient(circle_at_15%_10%,rgba(34,211,238,0.12),transparent_35%),radial-gradient(circle_at_85%_20%,rgba(139,92,246,0.08),transparent_42%)]",
+        fade: "absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#070b14]/18 dark:to-[#f6f8fc]/12",
       };
   }
 }

@@ -7,6 +7,7 @@ import Container from "@/components/ui/Container";
 import { NAV_ITEMS } from "@/lib/constants";
 import useActiveSection from "@/hooks/useActiveSection";
 import { cn } from "@/utils/cn";
+import { useThemeMode } from "@/components/theme/ThemeProvider";
 
 import BackgroundStyleControl from "./BackgroundStyleControl";
 import { useBackground } from "../background/BackgroundProvider";
@@ -14,6 +15,8 @@ import { useBackground } from "../background/BackgroundProvider";
 function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { resolvedTheme } = useThemeMode();
+  const isLight = resolvedTheme === "light";
 
   const selectors = useMemo(() => NAV_ITEMS.map((item) => item.href), []);
   const { activeSection } = useActiveSection({
@@ -61,9 +64,13 @@ function Header() {
             <div
               className={cn(
                 "flex w-full max-w-5xl items-center justify-between gap-3 rounded-2xl border px-3 py-2.5 transition-all duration-300",
-                scrolled
-                  ? "border-white/15 bg-[#0b1220]/70 shadow-[0_12px_40px_rgba(0,0,0,0.30)] backdrop-blur-xl"
-                  : "border-white/10 bg-[#0b1220]/45 backdrop-blur-lg",
+                isLight
+                  ? scrolled
+                    ? "border-slate-200/80 bg-white/85 shadow-[0_12px_40px_rgba(15,23,42,0.12)] backdrop-blur-xl"
+                    : "border-slate-200/60 bg-white/70 backdrop-blur-lg"
+                  : scrolled
+                    ? "border-white/15 bg-[#0b1220]/70 shadow-[0_12px_40px_rgba(0,0,0,0.30)] backdrop-blur-xl"
+                    : "border-white/10 bg-[#0b1220]/45 backdrop-blur-lg",
               )}
             >
               {/* Left: Logo */}
@@ -77,7 +84,14 @@ function Header() {
                 className="hidden min-w-0 items-center justify-center md:flex"
               >
                 <LayoutGroup>
-                  <div className="flex items-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-1">
+                  <div
+                    className={cn(
+                      "flex items-center gap-1 rounded-2xl border p-1",
+                      isLight
+                        ? "border-slate-200/60 bg-slate-100/80"
+                        : "border-white/10 bg-white/5",
+                    )}
+                  >
                     {NAV_ITEMS.map((item) => {
                       const itemId = item.href.replace(/^#/, "").toLowerCase();
                       const isActive = normalizedActiveSection === itemId;
@@ -89,8 +103,10 @@ function Header() {
                           aria-current={isActive ? "page" : undefined}
                           className={cn(
                             "relative rounded-xl px-3 py-2 text-sm transition",
-                            "hover:bg-white/6 hover:text-white",
-                            isActive ? "text-[#0b1220]" : "text-gray-300",
+                            isLight
+                              ? "hover:bg-slate-200/60 hover:text-slate-900"
+                              : "hover:bg-white/6 hover:text-white",
+                            isActive ? "text-[#0b1220]" : isLight ? "text-slate-600" : "text-gray-300",
                           )}
                         >
                           {isActive && (
@@ -129,10 +145,11 @@ function Header() {
                   type="button"
                   onClick={() => setMobileOpen((prev) => !prev)}
                   className={cn(
-                    "inline-flex h-10 w-10 items-center justify-center rounded-xl border text-gray-200 transition md:hidden",
-                    mobileOpen
-                      ? "border-white/20 bg-white/10"
-                      : "border-white/10 bg-white/5 hover:bg-white/10",
+                    "inline-flex h-10 w-10 items-center justify-center rounded-xl border transition md:hidden",
+                    isLight
+                      ? "text-slate-600 border-slate-200/60 bg-slate-100/80 hover:bg-slate-200/60"
+                      : "text-gray-200 border-white/10 bg-white/5 hover:bg-white/10",
+                    mobileOpen && (isLight ? "bg-slate-200/70" : "border-white/20 bg-white/10"),
                   )}
                   aria-label={
                     mobileOpen
@@ -164,7 +181,12 @@ function Header() {
             <nav
               id="mobile-nav-panel"
               aria-label="Mobile navigation"
-              className="surface-strong overflow-hidden p-2"
+              className={cn(
+                "overflow-hidden p-2",
+                isLight
+                  ? "rounded-2xl border border-slate-200/60 bg-white/90 shadow-lg backdrop-blur-xl"
+                  : "surface-strong",
+              )}
             >
               <LayoutGroup>
                 <div className="flex flex-col">
@@ -176,7 +198,7 @@ function Header() {
                     />
                   </div>
 
-                  <div className="border-t border-white/10 pt-2">
+                  <div className={cn("border-t pt-2", isLight ? "border-slate-200/60" : "border-white/10")}>
                     {NAV_ITEMS.map((item) => {
                       const itemId = item.href.replace(/^#/, "").toLowerCase();
                       const isActive = normalizedActiveSection === itemId;
@@ -189,8 +211,10 @@ function Header() {
                           aria-current={isActive ? "page" : undefined}
                           className={cn(
                             "relative rounded-xl px-4 py-3 text-sm transition",
-                            "hover:bg-white/5 hover:text-white",
-                            isActive ? "text-white" : "text-gray-200",
+                            isLight
+                              ? "hover:bg-slate-100 hover:text-slate-900"
+                              : "hover:bg-white/5 hover:text-white",
+                            isActive ? (isLight ? "text-slate-900" : "text-white") : isLight ? "text-slate-600" : "text-gray-200",
                           )}
                         >
                           {isActive && (
@@ -211,8 +235,8 @@ function Header() {
                     })}
                   </div>
 
-                  <div className="mt-2 border-t border-white/10 pt-2">
-                    <div className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm text-emerald-300">
+                  <div className={cn("mt-2 border-t pt-2", isLight ? "border-slate-200/60" : "border-white/10")}>
+                    <div className={cn("flex items-center gap-2 rounded-xl px-4 py-3 text-sm", isLight ? "text-emerald-600" : "text-emerald-300")}>
                       <span className="inline-block h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_14px_rgba(110,231,183,0.8)]" />
                       Available for opportunities
                     </div>
@@ -230,7 +254,8 @@ function Header() {
         aria-label="Close navigation overlay"
         onClick={() => setMobileOpen(false)}
         className={cn(
-          "fixed inset-0 z-30 bg-black/30 transition-opacity duration-300 md:hidden",
+          "fixed inset-0 z-30 transition-opacity duration-300 md:hidden",
+          isLight ? "bg-slate-900/20" : "bg-black/30",
           mobileOpen ? "opacity-100" : "pointer-events-none opacity-0",
         )}
       />

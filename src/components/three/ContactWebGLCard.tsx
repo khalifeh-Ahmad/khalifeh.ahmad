@@ -1,11 +1,15 @@
 import { useRef } from "react";
 import * as THREE from "three";
 import { useThreeRenderer } from "@/hooks/useThreeRenderer";
+import { useThemeMode } from "@/components/theme/ThemeProvider";
+import { cn } from "@/utils/cn";
 
 function ContactWebGLCard() {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const mouseTarget = useRef({ x: 0, y: 0 });
   const mouseCurrent = useRef({ x: 0, y: 0 });
+  const { resolvedTheme } = useThemeMode();
+  const isLight = resolvedTheme === "light";
 
   const { supported } = useThreeRenderer(mountRef, {
     onSetup: ({ scene, camera, renderer, mountEl, prefersReducedMotion }) => {
@@ -202,19 +206,32 @@ function ContactWebGLCard() {
   });
 
   return (
-    <div className="relative h-[340px] overflow-hidden rounded-2xl border border-white/10 bg-[#0b1220]/55 md:h-[380px]">
+    <div
+      className={cn(
+        "relative h-[340px] overflow-hidden rounded-2xl border md:h-[380px]",
+        isLight
+          ? "border-slate-200/70 bg-slate-50/90"
+          : "border-white/10 bg-[#0b1220]/55",
+      )}
+    >
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 opacity-[0.14]"
         style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)",
+          backgroundImage: isLight
+            ? "linear-gradient(rgba(15,23,42,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,0.06) 1px, transparent 1px)"
+            : "linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)",
           backgroundSize: "36px 36px",
         }}
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(0,0,0,0.0),rgba(0,0,0,0.62))]"
+        className={cn(
+          "pointer-events-none absolute inset-0",
+          isLight
+            ? "bg-[radial-gradient(circle_at_50%_45%,rgba(0,0,0,0.0),rgba(0,0,0,0.25))]"
+            : "bg-[radial-gradient(circle_at_50%_45%,rgba(0,0,0,0.0),rgba(0,0,0,0.62))]",
+        )}
       />
 
       {supported ? (
@@ -222,10 +239,10 @@ function ContactWebGLCard() {
       ) : (
         <div className="flex h-full items-center justify-center px-6 text-center">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-gray-400">
+            <p className={cn("text-xs uppercase tracking-[0.2em]", isLight ? "text-slate-500" : "text-gray-400")}>
               WebGL
             </p>
-            <p className="mt-2 text-sm text-gray-200">
+            <p className={cn("mt-2 text-sm", isLight ? "text-slate-600" : "text-gray-200")}>
               Visual not available in this environment.
             </p>
           </div>
@@ -234,7 +251,10 @@ function ContactWebGLCard() {
 
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-violet-300/40 to-transparent"
+        className={cn(
+          "pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent",
+          isLight ? "via-violet-400/30" : "via-violet-300/40",
+        )}
       />
     </div>
   );
