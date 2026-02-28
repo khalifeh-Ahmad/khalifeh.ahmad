@@ -10,6 +10,7 @@ import useSectionThemeSignal from "@/hooks/useSectionThemeSignal";
 import { NAV_ITEMS } from "@/lib/constants";
 import CursorGlow from "@/components/common/CursorGlow";
 import CustomCursor from "@/components/common/CustomCursor";
+import { useBackground } from "@/components/background/BackgroundProvider";
 
 function ScrollProgressBar() {
   const { scrollYProgress } = useScroll();
@@ -61,14 +62,17 @@ function MainLayout({ children }: PropsWithChildren) {
         y: [0, -10, 8, 0],
         scale: [1, 1.03, 0.99, 1],
       };
-
-  // TEMP DEBUG (remove after confirming)
+  const { variant } = useBackground(); // TEMP DEBUG (remove after confirming)
   // console.log("activeSection:", activeSection, "signal:", sectionSignal);
 
   return (
     <div className="relative min-h-screen overflow-x-clip text-gray-100">
       {/* Global WebGL background (section reactive) */}
-      <GlobalWebGLBackground signal={sectionSignal} />
+      <GlobalWebGLBackground
+        key={variant}
+        signal={sectionSignal}
+        variant={variant}
+      />
       {/* <CursorGlow /> */}
       {/* Ambient background glows (preserved design) */}
       <div
@@ -108,7 +112,7 @@ function MainLayout({ children }: PropsWithChildren) {
         />
       </div>
       <CursorGlow />
-      <CustomCursor />
+      {/* <CustomCursor /> */}
       <ScrollProgressBar />
       <Header />
 

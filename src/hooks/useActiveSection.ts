@@ -42,15 +42,24 @@ export function useActiveSection({
   );
 
   useEffect(() => {
-    const sections = selectors
-      .map((selector) => document.querySelector<HTMLElement>(selector))
-      .filter((el): el is HTMLElement => Boolean(el));
-
-    if (!sections.length) return;
-
     let ticking = false;
 
     const updateActiveSection = () => {
+      // Re-query each time so we pick up sections after lazy load / dynamic content
+      const sections = selectors
+        .map((selector) => document.querySelector<HTMLElement>(selector))
+        .filter((el): el is HTMLElement => Boolean(el));
+
+      if (!sections.length) {
+        setActiveSection(fallbackId);
+        return;
+      }
+
+      // Sort by position so we always iterate top-to-bottom
+      const sorted = [...sections].sort(
+        (a, b) => getSectionTop(a) - getSectionTop(b),
+      );
+
       const scrollPosition = window.scrollY + offset;
 
       // If near bottom, force last visible section (prevents weird top section staying active)
@@ -59,17 +68,17 @@ export function useActiveSection({
         document.documentElement.scrollHeight - 4;
 
       if (nearBottom) {
-        const lastId = sections[sections.length - 1]?.id ?? fallbackId;
+        const lastId = sorted[sorted.length - 1]?.id ?? fallbackId;
         setActiveSection(lastId);
         return;
       }
 
       let current = fallbackId;
 
-      for (const section of sections) {
+      for (const section of sorted) {
         const top = getSectionTop(section);
         if (scrollPosition >= top) {
-          current = section.id;
+          current = section.id ?? current;
         } else {
           break;
         }
@@ -90,12 +99,17 @@ export function useActiveSection({
 
     const onResize = () => updateActiveSection();
 
+    // Initial run (sections may not exist yet if lazy-loaded)
     updateActiveSection();
+
+    // Re-run once after a short delay so we pick up lazy-loaded sections
+    const timeoutId = window.setTimeout(updateActiveSection, 300);
 
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize);
 
     return () => {
+      window.clearTimeout(timeoutId);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
     };
